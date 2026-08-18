@@ -66,8 +66,6 @@ export const app = new Elysia()
 		}),
 	)
 
-	.use(HealthRoute)
-
 	// Healthcheck is loopback-only so only the Docker healthcheck can hit it.
 	.guard((api) => api.onBeforeHandle(localOnlyGuard).use(HealthRoute))
 

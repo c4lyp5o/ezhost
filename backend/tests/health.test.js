@@ -28,7 +28,7 @@ describe("SPA fallback", () => {
 			new Request("http://localhost/some/spa/route"),
 		);
 		expect(res.status).toBe(200);
-		expect(await res.text()).toContain("<html>spa</html>");
+		expect(await res.text()).toContain('<div id="root">');
 	});
 
 	it("returns JSON 404 for unknown API paths", async () => {
