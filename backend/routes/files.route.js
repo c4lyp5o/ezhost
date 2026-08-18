@@ -57,4 +57,41 @@ export const FilesRoutes = new Elysia({ name: "FilesRoutes" })
 				tags: ["Files"],
 			},
 		},
+	)
+	.delete(
+		"/api/v1/admin/files/:name",
+		({ params: { name }, isAdmin, set }) => {
+			if (!isAdmin) {
+				set.status = 401;
+				return { success: false, message: "Unauthorized" };
+			}
+			return FilesService.deleteFile(name);
+		},
+		{
+			detail: {
+				summary: "Delete File",
+				description: "Deletes a file from public/ (admin only).",
+				tags: ["Files", "Admin"],
+			},
+		},
+	)
+	.post(
+		"/api/v1/admin/dirs",
+		({ body, isAdmin, set }) => {
+			if (!isAdmin) {
+				set.status = 401;
+				return { success: false, message: "Unauthorized" };
+			}
+			return FilesService.createDir(body?.path);
+		},
+		{
+			body: t.Optional(
+				t.Object({ path: t.Optional(t.String()) }),
+			),
+			detail: {
+				summary: "Create Folder",
+				description: "Creates a folder inside public/ (admin only).",
+				tags: ["Files", "Admin"],
+			},
+		},
 	);

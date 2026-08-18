@@ -3,7 +3,7 @@ import { Database } from "bun:sqlite";
 const db = new Database("./ezhost.sqlite");
 
 // Initialize the database schema
-export function initDB() {
+export async function initDB() {
   db.run(`
     CREATE TABLE IF NOT EXISTS admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +20,7 @@ export function initDB() {
       console.error("ADMIN_PASSWORD environment variable is required for first run");
       process.exit(1);
     }
-    const hash = Bun.password.hash(adminPassword, { algorithm: "bcrypt" });
+    const hash = await Bun.password.hash(adminPassword, { algorithm: "bcrypt" });
     // Use prepared statement to avoid binding issues
     const stmt = db.prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
     stmt.run("admin", hash);

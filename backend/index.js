@@ -44,28 +44,7 @@ export const app = new Elysia()
         logger.info(`${request.method} ${request.url}`);
     })
     .guard((api) => api.onBeforeHandle(localOnlyGuard).use(HealthRoute))
-    .group("/api/v1", (api) => 
-        api
-            .get("/files", FilesRoutes.listFiles)
-            .post("/upload", FilesRoutes.uploadFile)
-    )
-    .group("/api/v1/admin", (api) => 
-        api
-            .delete("/files/:id", ({ params: { id }, isAdmin, set }) => {
-                if (!isAdmin) {
-                    set.status = 401;
-                    return { success: false, message: "Unauthorized" };
-                }
-                return FilesRoutes.deleteFile(id);
-            })
-            .post("/dirs", ({ body, isAdmin, set }) => {
-                if (!isAdmin) {
-                    set.status = 401;
-                    return { success: false, message: "Unauthorized" };
-                }
-                return FilesRoutes.createDir(body.path);
-            })
-    )
+    .use(FilesRoutes)
     .get("/login", () => {
         return new Response(LOGIN_HTML, {
             headers: { "Content-Type": "text/html" }
@@ -81,6 +60,7 @@ export const app = new Elysia()
         auth.set = {
             value: password,
             httpOnly: true,
+            secure: true,
             sameSite: "lax",
             path: "/",
             maxAge: 60 * 60 * 24
@@ -107,6 +87,13 @@ export const app = new Elysia()
         if (path.startsWith("/app") && !path.startsWith("/app/assets")) {
             return new Response(Bun.file(`${DIST_DIR}/index.html`), {
                 headers: { "Content-Type": "text/html" }
+            });
+        }
+        if (path.startsWith("/api/")) {
+            // Unknown API endpoint → consistent JSON 404 for API consumers.
+            return new Response(JSON.stringify({ success: false, message: "Not Found" }), {
+                status: 404,
+                headers: { "Content-Type": "application/json" }
             });
         }
         return new Response("Not found", { status: 404 });
