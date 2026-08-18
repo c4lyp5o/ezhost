@@ -14,4 +14,7 @@ process.env.DIST_DIR = path.join(tmp, "dist");
 fs.mkdirSync(process.env.PUBLIC_DIR, { recursive: true });
 fs.mkdirSync(process.env.DIST_DIR, { recursive: true });
 // Fake SPA shell so the fallback route can be exercised in tests.
-fs.writeFileSync(path.join(process.env.DIST_DIR, "index.html"), "<html>spa</html>");
+fs.writeFileSync(
+	path.join(process.env.DIST_DIR, "index.html"),
+	'<!DOCTYPE html><html><body><div id="root"></div></body></html>',
+);

@@ -3,9 +3,13 @@ import { afterAll, describe, expect, it } from "bun:test";
 import { app } from "../index.js";
 import { PUBLIC_DIR } from "../config.js";
 
+// Uploads are intentionally public (no auth) — see FilesRoutes.
 const upload = (form) =>
 	app.handle(
-		new Request("http://localhost/api/v1/upload", { method: "POST", body: form }),
+		new Request("http://localhost/api/v1/upload", {
+			method: "POST",
+			body: form,
+		}),
 	);
 
 describe("Files API", () => {
@@ -13,7 +17,7 @@ describe("Files API", () => {
 
 	afterAll(() => {
 		// Cleanup the throwaway public dir contents created by this file.
-		for (const name of ["seed.txt", "note.txt"]) {
+		for (const name of ["seed.txt", "note.txt", "page.html", "style.css", "app.js"]) {
 			try {
 				Bun.file(path.join(PUBLIC_DIR, name)).delete();
 			} catch {}
@@ -55,6 +59,28 @@ describe("Files API", () => {
 		expect(await Bun.file(path.join(PUBLIC_DIR, "note.txt")).text()).toBe(
 			"uploaded-content",
 		);
+	});
+
+	it("accepts HTML/CSS/JS uploads (content-type loosened by design)", async () => {
+		for (const [name, content] of [
+			["page.html", "<h1>hi</h1>"],
+			["style.css", "body { color: red; }"],
+			["app.js", "console.log('hi')"],
+		]) {
+			const form = new FormData();
+			form.append("files", new File([content], name));
+			const res = await upload(form);
+			expect(res.status).toBe(201);
+		}
+	});
+
+	it("still rejects ambiguous active markup and executables", async () => {
+		for (const name of ["vector.svg", "doc.xml", "setup.exe", "run.sh"]) {
+			const form = new FormData();
+			form.append("files", new File(["x"], name));
+			const res = await upload(form);
+			expect(res.status).toBe(415);
+		}
 	});
 
 	it("POST /api/v1/upload never escapes public/ with traversal names", async () => {

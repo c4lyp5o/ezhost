@@ -4,14 +4,16 @@ import { MAX_UPLOAD_BYTES, PUBLIC_DIR } from "../config";
 import { logger } from "../logger";
 import { HttpError, safeBasename } from "../utils";
 
-// Blocked extensions: uploading active content (HTML/SVG/JS/XML) would let a
-// public uploader serve script that runs same-origin (stored XSS). Everything
-// else is fair game for a file host.
+// Uploads are PUBLIC by Calypso's explicit design: ezhost is a CDN-style
+// host, anyone may drop files here, and HTML/CSS/JS are deliberately allowed
+// so the owner can self-host pages/scripts. SVG/XML remain blocked (inline-
+// script / XXE vectors) and executables stay blocked as hardening.
+// NOTE: serving attacker-uploaded HTML/JS same-origin is a known, accepted
+// trade-off on a personal host; admin actions rely on httpOnly cookies, so a
+// page served here cannot forge admin requests.
 const DISALLOWED_EXT = new Set([
-	"html", "htm", "xhtml", "shtml", // markup that executes scripts
 	"svg", // inlines scripts / event handlers
-	"js", "mjs", "cjs", // scripts
-	"xml", "xsl", // XXE / stylesheet tricks in some browsers
+	"xml", "xsl", "dtd", // XXE / stylesheet tricks in some browsers
 	"hta", "exe", "pif", "scr", "bat", "cmd", "ps1", "sh", // executable
 ]);
 

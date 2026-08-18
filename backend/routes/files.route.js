@@ -28,7 +28,11 @@ export const FilesRoutes = new Elysia({ name: "FilesRoutes" })
 	.post(
 		"/api/v1/upload",
 		async ({ request, set }) => {
-			// Bun parses multipart natively — no multer needed.
+			// Public CDN-style uploader by design: anyone may drop files here
+			// to be statically served (HTML/JS/CSS allowed). The admin token
+			// is NOT required — admin is only needed for the destructive
+			// dashboard actions (delete/dirs). Bun parses multipart natively —
+			// no multer needed.
 			const formData = await request.formData();
 			const files = formData
 				.getAll("files")

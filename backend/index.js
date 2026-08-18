@@ -18,8 +18,10 @@ import { FilesRoutes } from "./routes/files.route";
 import { initDB, verifyAdmin } from "./services/admin";
 import { authPlugin } from "./plugins/auth.plugin";
 
-// Initialize the database and create admin if needed
-initDB();
+// Initialize the database and create admin if needed.
+// Must be awaited BEFORE the server handles its first request, or the admin
+// seed can still be writing when a request verifies credentials.
+await initDB();
 
 export const app = new Elysia()
     .onError(({ code, error, set, request }) => {
@@ -32,6 +34,14 @@ export const app = new Elysia()
             NODE_ENV === "development" && logger.error(error);
             set.status = 400;
             return { success: false, message: "Bad request" };
+        }
+
+        if (code === "NOT_FOUND") {
+            // Thrown by @elysiajs/static for an unknown path under a static
+            // prefix (e.g. a deep route under /app or /static). Turn it into a
+            // clean 404 response instead of letting it propagate.
+            set.status = 404;
+            return { success: false, message: "Not Found" };
         }
 
         throw error;
@@ -83,12 +93,14 @@ export const app = new Elysia()
         assets: DIST_DIR, 
         prefix: "/app" 
     }))
+    // Serve uploaded files (public/) under /static — where uploads point.
+    // Short cache life because files are re-uploaded under the same name.
+    .use(staticPlugin({
+        assets: PUBLIC_DIR,
+        prefix: "/static",
+        maxAge: UPLOADS_MAX_AGE,
+    }))
     .get("/*", ({ path }) => {
-        if (path.startsWith("/app") && !path.startsWith("/app/assets")) {
-            return new Response(Bun.file(`${DIST_DIR}/index.html`), {
-                headers: { "Content-Type": "text/html" }
-            });
-        }
         if (path.startsWith("/api/")) {
             // Unknown API endpoint → consistent JSON 404 for API consumers.
             return new Response(JSON.stringify({ success: false, message: "Not Found" }), {
