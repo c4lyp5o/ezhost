@@ -1,94 +1,268 @@
-import path from "node:path";
 import { Elysia } from "elysia";
-import staticPlugin from "@elysiajs/static";
 import { logger } from "./logger";
-import {
-	DIST_DIR,
-	DIST_MAX_AGE,
-	NODE_ENV,
-	PORT,
-	PUBLIC_DIR,
-	RATE_LIMIT,
-	UPLOADS_MAX_AGE,
+import { staticPlugin } from "@elysiajs/static";
+import { 
+    DIST_DIR,
+    DIST_MAX_AGE,
+    NODE_ENV,
+    PORT,
+    PUBLIC_DIR,
+    RATE_LIMIT,
+    UPLOADS_MAX_AGE,
 } from "./config";
 import { HttpError } from "./utils";
 import { rateLimitHandler } from "./plugins/rate-limit.plugin";
 import { localOnlyGuard } from "./plugins/local-only.plugin";
 import { HealthRoute } from "./routes/health.route";
 import { FilesRoutes } from "./routes/files.route";
+import { initDB, verifyAdmin } from "./services/admin";
+import { authPlugin } from "./plugins/auth.plugin";
+
+// Initialize the database and create admin if needed
+initDB();
 
 export const app = new Elysia()
-	.onError(({ code, error, set, request }) => {
-		if (error instanceof HttpError) {
-			set.status = error.status;
-			return { success: false, message: error.message };
-		}
+    .onError(({ code, error, set, request }) => {
+        if (error instanceof HttpError) {
+            set.status = error.status;
+            return { success: false, message: error.message };
+        }
 
-		if (code === "VALIDATION") {
-			NODE_ENV === "development" && logger.error(error);
-			set.status = 400;
-			return { success: false, message: "Bad request" };
-		}
+        if (code === "VALIDATION") {
+            NODE_ENV === "development" && logger.error(error);
+            set.status = 400;
+            return { success: false, message: "Bad request" };
+        }
 
-		if (code === "NOT_FOUND") {
-			// API misses get JSON; everything else falls through to the SPA shell.
-			if (new URL(request.url).pathname.startsWith("/api/")) {
-				set.status = 404;
-				return { success: false, message: "Not Found" };
-			}
+        throw error;
+    })
+    .use(authPlugin)
+    .derive({ as: "global" }, ({ request, set }) => {
+        if (RATE_LIMIT > 0) {
+            rateLimitHandler(request, set);
+        }
+        logger.info(`${request.method} ${request.url}`);
+    })
+    .guard((api) => api.onBeforeHandle(localOnlyGuard).use(HealthRoute))
+    .group("/api/v1", (api) => 
+        api
+            .get("/files", FilesRoutes.listFiles)
+            .post("/upload", FilesRoutes.uploadFile)
+    )
+    .group("/api/v1/admin", (api) => 
+        api
+            .delete("/files/:id", ({ params: { id }, isAdmin, set }) => {
+                if (!isAdmin) {
+                    set.status = 401;
+                    return { success: false, message: "Unauthorized" };
+                }
+                return FilesRoutes.deleteFile(id);
+            })
+            .post("/dirs", ({ body, isAdmin, set }) => {
+                if (!isAdmin) {
+                    set.status = 401;
+                    return { success: false, message: "Unauthorized" };
+                }
+                return FilesRoutes.createDir(body.path);
+            })
+    )
+    .get("/login", () => {
+        return new Response(LOGIN_HTML, {
+            headers: { "Content-Type": "text/html" }
+        });
+    })
+    .post("/login", async ({ body, set, cookie: { auth } }) => {
+        const { password } = body;
+        const isValid = await verifyAdmin("admin", password);
+        if (!isValid) {
+            set.status = 401;
+            return { success: false, message: "Invalid password" };
+        }
+        auth.set = {
+            value: password,
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24
+        };
+        set.status = 302;
+        set.headers = { Location: "/" };
+        return { success: true };
+    })
+    .get("/", ({ isAdmin }) => {
+        if (!isAdmin) {
+            return new Response(LOGIN_HTML, {
+                headers: { "Content-Type": "text/html" }
+            });
+        }
+        return new Response(DASHBOARD_HTML, {
+            headers: { "Content-Type": "text/html" }
+        });
+    })
+    .use(staticPlugin({ 
+        assets: DIST_DIR, 
+        prefix: "/app" 
+    }))
+    .get("/*", ({ path }) => {
+        if (path.startsWith("/app") && !path.startsWith("/app/assets")) {
+            return new Response(Bun.file(`${DIST_DIR}/index.html`), {
+                headers: { "Content-Type": "text/html" }
+            });
+        }
+        return new Response("Not found", { status: 404 });
+    });
 
-			// SPA fallback must be a fresh 200 Response — file() inside onError
-			// keeps the error status (verified Elysia gotcha).
-			return new Response(Bun.file(path.join(DIST_DIR, "index.html")), {
-				status: 200,
-				headers: { "Content-Type": "text/html" },
-			});
-		}
+export const LOGIN_HTML = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Ezhost Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; display: flex; height: 100vh; align-items: center; justify-content: center; background: #f0f0f0; }
+        .form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #357ab8; }
+    </style>
+</head>
+<body>
+    <div class="form">
+        <h2>Admin Login</h2>
+        <form id="loginForm">
+            <input type="password" id="password" placeholder="Enter admin password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            if (res.ok) {
+                window.location.href = '/';
+            } else {
+                alert('Invalid password');
+            }
+        });
+    </script>
+</body>
+</html>`;
 
-		set.status = 500;
-		logger.error(`[SERVER] 💥 [${code}] ${error?.stack || error}`);
-		return {
-			success: false,
-			message: NODE_ENV === "development" ? error.message : "Internal Server Error",
-		};
-	})
+export const DASHBOARD_HTML = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Ezhost Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 2rem; }
+        .content { flex: 1; padding: 2rem; overflow-y: auto; background: #ecf0f1; }
+        h1, h2 { color: #2c3e50; }
+        .file-list { margin-top: 1rem; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #ddd; }
+        .file-item:hover { background: #f5f5f5; }
+        .btn { background: #4a90e2; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #357ab8; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        input, select { padding: 0.5rem; margin: 0.5rem 0; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>Ezhost Admin</h1>
+        <p>Logged in as admin</p>
+        <button id="logoutBtn" class="btn btn-danger" style="width: 100%; margin-top: 2rem;">Logout</button>
+    </div>
+    <div class="content">
+        <h2>File Management</h2>
+        <div class="file-list" id="fileList">
+            <p>Loading files...</p>
+        </div>
+        <div style="margin-top: 2rem;">
+            <h3>Create New Folder</h3>
+            <input type="text" id="newDirPath" placeholder="Enter folder path (e.g., /docs/2026)">
+            <button id="createDirBtn" class="btn">Create Folder</button>
+        </div>
+    </div>
+    <script>
+        // Load files from the API
+        async function loadFiles() {
+            const res = await fetch('/api/v1/files');
+            if (!res.ok) {
+                document.getElementById('fileList').innerHTML = '<p>Error loading files</p>';
+                return;
+            }
+            const files = await res.json();
+            const list = document.getElementById('fileList');
+            if (files.length === 0) {
+                list.innerHTML = '<p>No files yet.</p>';
+                return;
+            }
+            list.innerHTML = files.map(function(file) {
+                return '<div class="file-item">' +
+                    '<div>' +
+                        '<strong>' + file.name + '</strong><br>' +
+                        '<small>' + new Date(file.uploadedAt).toLocaleString() + '</small>' +
+                    '</div>' +
+                    '<div>' +
+                        '<button class="btn btn-danger" data-id="' + file.id + '">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
 
-	// Uploaded files — short cache life because they're re-uploaded under the
-	// same names (data.js etc). A long max-age would serve stale data.
-	// alwaysStatic MUST be false here: true registers routes only for files
-	// present at startup, so runtime uploads would 404 (SPA fallback instead).
-	.use(
-		staticPlugin({
-			assets: PUBLIC_DIR,
-			prefix: "/static/",
-			alwaysStatic: false,
-			maxAge: UPLOADS_MAX_AGE,
-		}),
-	)
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.file-item .btn-danger').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    if (!confirm('Are you sure you want to delete this file?')) return;
+                    const id = btn.dataset.id;
+                    const res = await fetch('/api/v1/admin/files/' + id, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        loadFiles();
+                    } else {
+                        alert('Failed to delete file');
+                    }
+                });
+            });
+        }
 
-	// Healthcheck is loopback-only so only the Docker healthcheck can hit it.
-	.guard((api) => api.onBeforeHandle(localOnlyGuard).use(HealthRoute))
+        // Create folder
+        document.getElementById('createDirBtn').addEventListener('click', async function() {
+            const path = document.getElementById('newDirPath').value.trim();
+            if (!path) {
+                alert('Please enter a folder path');
+                return;
+            }
+            const res = await fetch('/api/v1/admin/dirs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path })
+            });
+            if (res.ok) {
+                alert('Folder created');
+                document.getElementById('newDirPath').value = '';
+                loadFiles();
+            } else {
+                const resText = await res.text();
+                alert('Failed to create folder: ' + resText);
+            }
+        });
 
-	// File listing + upload are public but rate-limited per IP.
-	.guard((api) => api.onBeforeHandle(rateLimitHandler(RATE_LIMIT)).use(FilesRoutes))
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            const res = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: '' }) });
+            window.location.href = '/login';
+        });
 
-	// Built client assets — hashed names, safe to cache for a week.
-	.use(
-		staticPlugin({
-			assets: DIST_DIR,
-			prefix: "/",
-			indexHTML: true,
-			alwaysStatic: true,
-			maxAge: DIST_MAX_AGE,
-		}),
-	);
-
-try {
-	app.listen(PORT);
-	logger.info(
-		`[SERVER] 🚀 ezhost is running on port ${PORT} | mode: ${NODE_ENV}`,
-	);
-} catch (err) {
-	logger.error(`[SERVER] Failed to start: ${err.message}`);
-	process.exit(1);
-}
+        // Initial load
+        loadFiles();
+    </script>
+</body>
+</html>`;

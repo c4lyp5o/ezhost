@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="EZHOST - host anything, instantly" />
+    <meta name="author" content="c4lyp5o" />
     <title>EZHOST - Host Anything!</title>
+    <script>
+      // Dark is the default theme — apply the class before first paint to
+      // avoid a light flash. The toggle persists "light"/"dark" under ezhost-theme.
+      (function () {
+        var saved = null;
+        try {
+          saved = localStorage.getItem("ezhost-theme");
+        } catch (e) {}
+        if (saved !== "light") document.documentElement.classList.add("dark");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
