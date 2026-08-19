@@ -1,9 +1,9 @@
 import { Elysia } from "elysia";
 import { logger } from "./logger";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { staticPlugin } from "@elysiajs/static";
-import { 
+import {
     DIST_DIR,
     DIST_MAX_AGE,
     NODE_ENV,
@@ -19,6 +19,41 @@ import { HealthRoute } from "./routes/health.route";
 import { FilesRoutes } from "./routes/files.route";
 import { initDB, verifyAdmin } from "./services/admin";
 import { authPlugin } from "./plugins/auth.plugin";
+
+// Content types for /static uploads — deterministic MIME instead of relying on
+// the static plugin's map (which 404'd files it couldn't type).
+const MIME_BY_EXT = {
+    ".html": "text/html; charset=utf-8",
+    ".htm": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".mjs": "text/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".md": "text/markdown; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8",
+    ".csv": "text/csv; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".avif": "image/avif",
+    ".ico": "image/x-icon",
+    ".pdf": "application/pdf",
+    ".zip": "application/zip",
+    ".gz": "application/gzip",
+    ".tar": "application/x-tar",
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
+    ".wasm": "application/wasm",
+};
 
 // Initialize the database and create admin if needed.
 // Must be awaited BEFORE the server handles its first request, or the admin
@@ -130,12 +165,30 @@ export const app = new Elysia()
         maxAge: DIST_MAX_AGE,
     }))
     // Serve uploaded files (public/) under /static — where uploads point.
-    // Short cache life because files are re-uploaded under the same name.
-    .use(staticPlugin({
-        assets: PUBLIC_DIR,
-        prefix: "/static",
-        maxAge: UPLOADS_MAX_AGE,
-    }))
+    // Hand-rolled (not staticPlugin): deterministic MIME, traversal-guarded,
+    // and a deleted/missing file returns a clean 404 instead of throwing
+    // ENOENT through the plugin and killing the whole process.
+    .get("/static/*", ({ params, set }) => {
+        const rel = (params["*"] || "").replace(/^\/+/, "");
+        const root = path.resolve(PUBLIC_DIR);
+        const target = path.resolve(root, rel);
+
+        if (
+            !rel ||
+            !target.startsWith(root) ||
+            !existsSync(target) ||
+            statSync(target).isDirectory()
+        ) {
+            set.status = 404;
+            return { success: false, message: "Not Found" };
+        }
+
+        set.headers["Content-Type"] =
+            MIME_BY_EXT[path.extname(target).toLowerCase()] ||
+            "application/octet-stream";
+        set.headers["Cache-Control"] = `public, max-age=${UPLOADS_MAX_AGE}`;
+        return Bun.file(target);
+    })
     .get("/*", ({ path }) => {
         // Mirrors the ezmail/ezjot fallback: never intercept API or file-like
         // paths (unmatched /api/* and missing assets return a real 404).
