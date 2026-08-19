@@ -54,14 +54,16 @@ describe("SPA/static scope", () => {
 		expect(await res.text()).toContain('id="root"');
 	});
 
-	it("returns 404 for unknown paths outside /api/v1 and /app", async () => {
+	it("serves the SPA shell for unknown non-API paths (client-side routes)", async () => {
 		const res = await fetch(`http://127.0.0.1:${port}/some/spa/route`);
-		expect(res.status).toBe(404);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toContain('id="root"');
 	});
 
-	it("returns 404 for unknown deep paths under /app (no SPA catch-all)", async () => {
+	it("serves the SPA shell for unknown deep paths under /app", async () => {
 		const res = await fetch(`http://127.0.0.1:${port}/app/some/spa/route`);
-		expect(res.status).toBe(404);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toContain('id="root"');
 	});
 
 	it("returns JSON 404 for unknown API paths", async () => {

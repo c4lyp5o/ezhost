@@ -10,6 +10,9 @@ process.env.NODE_ENV = "test";
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ezhost-test-"));
 process.env.PUBLIC_DIR = path.join(tmp, "public");
 process.env.DIST_DIR = path.join(tmp, "dist");
+// Isolate the admin DB too, so `bun test` never reads or rewrites the real
+// dev ./ezhost.sqlite (auth tests seed their own throwaway admin here).
+process.env.EZHOST_DB = path.join(tmp, "ezhost.sqlite");
 
 fs.mkdirSync(process.env.PUBLIC_DIR, { recursive: true });
 fs.mkdirSync(process.env.DIST_DIR, { recursive: true });

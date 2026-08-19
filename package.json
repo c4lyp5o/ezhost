@@ -4,14 +4,14 @@
 	"type": "module",
 	"version": "2.0.0",
 	"scripts": {
+		"install:client": "cd frontend && bun install",
 		"install:backend": "cd backend && bun install",
-		"install:client": "cd client && bun install",
 		"install": "bun install:backend && bun install:client",
 		"dev:backend": "cd backend && bun --watch index.js",
-		"dev:client": "cd client && bun dev",
+		"dev:client": "cd frontend && bun dev",
 		"dev": "conc -n \"BACKEND,CLIENT\" -c \"cyan,magenta\" \"bun run dev:backend\" \"bun run dev:client\"",
 		"test:backend": "cd backend && bun test",
-		"build:client": "cd client && bun run build",
+		"build:client": "cd frontend && bun run build",
 		"start": "NODE_ENV=production bun backend/index.js"
 	},
 	"devDependencies": {

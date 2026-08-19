@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 
-const db = new Database("./ezhost.sqlite");
+export const DB_PATH = process.env.EZHOST_DB || "./ezhost.sqlite";
+const db = new Database(DB_PATH);
 
 // Initialize the database schema
 export async function initDB() {

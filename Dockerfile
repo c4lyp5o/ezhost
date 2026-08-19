@@ -3,8 +3,8 @@ FROM oven/bun:1.3-alpine AS builder
 
 WORKDIR /app
 
-COPY client ./client
-WORKDIR /app/client
+COPY frontend ./frontend
+WORKDIR /app/frontend
 RUN bun install && bun run build
 
 # Stage 2: Production — Elysia backend
