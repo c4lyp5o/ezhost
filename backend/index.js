@@ -120,8 +120,13 @@ export const app = new Elysia()
     // asset paths map under their full /assets/... names in dist/. In prod
     // (alwaysStatic) every file becomes an exact route; client-side routes
     // that aren't real files fall through to the catch-all below.
+    // Options mirror the proven ezjot/ezmail recipe — prefix "/" + indexHTML
+    // + alwaysStatic are required for hashed dist/ assets to be served at all.
     .use(staticPlugin({
         assets: DIST_DIR,
+        prefix: "/",
+        indexHTML: true,
+        alwaysStatic: true,
         maxAge: DIST_MAX_AGE,
     }))
     // Serve uploaded files (public/) under /static — where uploads point.
@@ -132,8 +137,9 @@ export const app = new Elysia()
         maxAge: UPLOADS_MAX_AGE,
     }))
     .get("/*", ({ path }) => {
-        if (path.startsWith("/api/")) {
-            // Unknown API endpoint → consistent JSON 404 for API consumers.
+        // Mirrors the ezmail/ezjot fallback: never intercept API or file-like
+        // paths (unmatched /api/* and missing assets return a real 404).
+        if (path.startsWith("/api") || path.includes(".")) {
             return new Response(JSON.stringify({ success: false, message: "Not Found" }), {
                 status: 404,
                 headers: { "Content-Type": "application/json" }
