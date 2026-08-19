@@ -1,12 +1,18 @@
-// Admin dashboard — React port of the old server-rendered DASHBOARD_HTML.
-// Lists files (same /api/v1/files payload the public browser uses), plus the
-// admin-only destructive actions: delete file, create folder, logout. All
-// admin API calls carry the httpOnly auth cookie automatically (same-origin).
+// Admin dashboard — file management console. Lists files (same payload the
+// public browser uses), plus admin-only actions: delete, create folder, logout.
+// Admin API calls carry the httpOnly auth cookie automatically (same-origin).
 import { useState } from "react";
 import useSWR from "swr";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../auth.js";
 import { formatBytes, formatDate, getFileIcon } from "../utils.js";
+import {
+	IconFolder,
+	IconTrash,
+	IconExternal,
+	IconLogout,
+	IconFolderPlus,
+} from "../components/Icons.jsx";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -68,27 +74,44 @@ const AdminDashboard = () => {
 	};
 
 	return (
-		<div className="flex min-h-screen bg-stone-100 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+		<div className="flex min-h-screen bg-[var(--surface-0)] text-[var(--text-hi)]">
 			{/* Sidebar */}
-			<aside className="flex w-60 shrink-0 flex-col border-r border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-900">
-				<h1 className="text-xl font-bold tracking-tight">
-					EZHOST <span className="text-purple-500">2.0</span>
-				</h1>
-				<p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-					Logged in as <span className="font-medium">admin</span>
+			<aside className="flex w-60 shrink-0 flex-col border-r border-[var(--stroke)] bg-[var(--surface-1)] p-5">
+				<div className="flex items-center gap-2.5">
+					<span
+						className="flex h-8 w-8 items-center justify-center rounded-[9px] font-bold"
+						style={{
+							background:
+								"linear-gradient(135deg, var(--accent), var(--accent-strong))",
+							color: "#fff",
+							boxShadow: "0 0 0 1px var(--stroke), 0 8px 20px -10px var(--accent-ring)",
+							fontSize: 15,
+						}}
+					>
+						e
+					</span>
+					<span className="text-[15px] font-semibold tracking-tight">
+						ezhost <span className="accent-text">admin</span>
+					</span>
+				</div>
+				<p className="mt-1.5 text-xs text-[var(--text-low)]">
+					Logged in as <span className="font-medium text-[var(--text-mid)]">admin</span>
 				</p>
+
 				<div className="mt-auto">
 					<a
 						href="/app"
-						className="mb-3 block rounded-md border border-stone-200 px-3 py-2 text-center text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+						className="btn-ghost mb-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium"
 					>
-						↗ Public file browser
+						<IconExternal size={15} />
+						Public browser
 					</a>
 					<button
 						type="button"
 						onClick={doLogout}
-						className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-500"
+						className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/20 dark:text-red-400"
 					>
+						<IconLogout size={15} />
 						Logout
 					</button>
 				</div>
@@ -96,24 +119,26 @@ const AdminDashboard = () => {
 
 			{/* Content */}
 			<main className="flex-1 overflow-y-auto p-6">
-				<h2 className="text-lg font-semibold">File Management</h2>
+				<h2 className="text-lg font-semibold tracking-tight">
+					File Management
+				</h2>
 
 				{(notice || error) && (
 					<div
-						className={`mt-4 rounded-md border px-3 py-2 text-sm ${
+						className={`mt-4 rounded-lg border px-3 py-2 text-sm ${
 							error
-								? "border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400"
-								: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400"
+								? "border-red-500/40 bg-red-500/5 text-red-600 dark:text-red-400"
+								: "border-emerald-500/40 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
 						}`}
 					>
 						{error || notice}
 					</div>
 				)}
 
-				<div className="mt-4 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
-					<ul className="divide-y divide-stone-200 dark:divide-stone-800">
+				<div className="surface mt-4 overflow-hidden rounded-xl">
+					<ul className="divide-y divide-[var(--stroke)]">
 						{isLoading && (
-							<li className="px-4 py-6 text-center text-sm text-stone-500 dark:text-stone-400">
+							<li className="px-4 py-6 text-center text-sm text-[var(--text-low)]">
 								<span className="animate-pulse">Loading files…</span>
 							</li>
 						)}
@@ -123,36 +148,45 @@ const AdminDashboard = () => {
 							</li>
 						)}
 						{!isLoading && !loadError && files.length === 0 && (
-							<li className="px-4 py-6 text-center text-sm text-stone-500 dark:text-stone-400">
+							<li className="px-4 py-6 text-center text-sm text-[var(--text-low)]">
 								No files yet.
 							</li>
 						)}
-						{files.map((f) => (
-							<li
-								key={f.name}
-								className="flex items-center gap-3 px-4 py-3"
-							>
-								<span className="text-xl" aria-hidden>
-									{f.isDirectory ? "📁" : getFileIcon(f.name)}
-								</span>
-								<div className="min-w-0 flex-1">
-									<p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-										{f.name}
-									</p>
-									<p className="text-xs text-stone-500 dark:text-stone-400">
-										{f.isDirectory ? "Folder" : formatBytes(f.size)}
-										{f.isDirectory ? "" : ` · ${formatDate(f.modified)}`}
-									</p>
-								</div>
-								<button
-									type="button"
-									onClick={() => deleteFile(f.name)}
-									className="shrink-0 rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-red-500"
+						{files.map((f) => {
+							const FileIcon = getFileIcon(f.name);
+							return (
+								<li
+									key={f.name}
+									className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-2)]/50"
 								>
-									Delete
-								</button>
-							</li>
-						))}
+									<span className="text-[var(--text-low)]">
+										{f.isDirectory ? (
+											<IconFolder size={19} className="accent-text" />
+										) : (
+											<FileIcon size={18} />
+										)}
+									</span>
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-sm font-medium text-[var(--text-hi)]">
+											{f.name}
+										</p>
+										<p className="mono text-xs text-[var(--text-mid)]">
+											{f.isDirectory ? "Folder" : formatBytes(f.size)}
+											{f.isDirectory ? "" : ` · ${formatDate(f.modified)}`}
+										</p>
+									</div>
+									<button
+										type="button"
+										onClick={() => deleteFile(f.name)}
+										aria-label={`Delete ${f.name}`}
+										title="Delete"
+										className="shrink-0 rounded-lg p-2 text-[var(--text-low)] transition hover:bg-red-500/10 hover:text-red-500"
+									>
+										<IconTrash size={16} />
+									</button>
+								</li>
+							);
+						})}
 					</ul>
 				</div>
 
@@ -161,8 +195,8 @@ const AdminDashboard = () => {
 					onSubmit={createDir}
 					className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-end"
 				>
-					<label className="flex flex-1 flex-col gap-1 text-sm">
-						<span className="font-medium text-stone-700 dark:text-stone-300">
+					<label className="flex flex-1 flex-col gap-1.5 text-sm">
+						<span className="text-[13px] font-medium text-[var(--text-mid)]">
 							Create new folder
 						</span>
 						<input
@@ -170,13 +204,14 @@ const AdminDashboard = () => {
 							value={folderPath}
 							onChange={(e) => setFolderPath(e.target.value)}
 							placeholder="e.g. /docs/2026"
-							className="rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
+							className="rounded-lg border border-[var(--stroke)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-hi)] placeholder-[var(--text-low)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-ring)]"
 						/>
 					</label>
 					<button
 						type="submit"
-						className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-500"
+						className="btn-accent inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
 					>
+						<IconFolderPlus size={15} />
 						Create Folder
 					</button>
 				</form>

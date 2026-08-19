@@ -1,46 +1,76 @@
 // Small display helpers shared across the client.
+import {
+	IconFileText,
+	IconImage,
+	IconFilm,
+	IconMusic,
+	IconArchive,
+	IconCode,
+	IconPdf,
+	IconBox,
+} from "./components/Icons.jsx";
+
+// Returns the visual icon component for a file by extension. Colour is applied
+// by the caller via the `accent` / `className` props these icons accept.
 export const getFileIcon = (name) => {
 	const ext = name.split(".").pop()?.toLowerCase();
 	switch (ext) {
 		case "pdf":
-			return "📕";
+			return IconPdf;
 		case "js":
 		case "ts":
 		case "jsx":
 		case "tsx":
-			return "🧩";
+		case "css":
+		case "html":
+		case "py":
+		case "go":
+		case "rs":
+		case "sh":
+			return IconCode;
 		case "json":
 		case "yaml":
 		case "yml":
 		case "toml":
-			return "📋";
+			return IconFileText;
 		case "png":
 		case "jpg":
 		case "jpeg":
 		case "gif":
 		case "webp":
 		case "svg":
-			return "🖼️";
+			return IconImage;
 		case "mp4":
 		case "mov":
 		case "avi":
 		case "mkv":
-			return "🎬";
+		case "webm":
+			return IconFilm;
 		case "mp3":
 		case "wav":
 		case "ogg":
-			return "🎵";
+		case "flac":
+		case "m4a":
+			return IconMusic;
 		case "zip":
 		case "tar":
 		case "gz":
 		case "7z":
-			return "🗜️";
+		case "rar":
+			return IconArchive;
 		case "txt":
 		case "md":
 		case "log":
-			return "📄";
+			return IconFileText;
+		case "doc":
+		case "docx":
+		case "xls":
+		case "xlsx":
+		case "ppt":
+		case "pptx":
+			return IconFileText;
 		default:
-			return "📦";
+			return IconBox;
 	}
 };
 

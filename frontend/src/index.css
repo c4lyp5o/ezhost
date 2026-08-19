@@ -5,12 +5,54 @@
    before first paint so there's never a light flash. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   EZhost design tokens — "Linear-grade dark file console"
+   One confident accent (#7d6bff family), warm layered surfaces,
+   hairline borders, restrained radius, disciplined type.
+   ============================================================ */
+
 :root {
 	color-scheme: light;
+
+	/* Surfaces — light mode (warm paper, not flat white) */
+	--surface-0: #fafaf9;      /* page canvas          */
+	--surface-1: #ffffff;      /* raised card          */
+	--surface-2: #f4f4f5;      /* inset / hover        */
+	--stroke: #e4e4e7;         /* hairline borders     */
+	--text-hi: #18181b;        /* primary text         */
+	--text-mid: #52525b;       /* secondary text       */
+	--text-low: #a1a1aa;       /* muted / placeholder  */
+
+	/* Accent — confident indigo-violet, used sparingly */
+	--accent: #6d5bff;
+	--accent-strong: #5a47e6;
+	--accent-soft: rgba(109, 91, 255, 0.08);
+	--accent-ring: rgba(109, 91, 255, 0.35);
+
+	/* Status */
+	--good: #10b981;
+	--bad: #ef4444;
+
+	font-feature-settings: "cv11", "ss01", "cv01";
 }
 
 .dark {
 	color-scheme: dark;
+
+	/* Surfaces — dark mode (near-black warm canvas, layered by border) */
+	--surface-0: #0a0a0c;      /* page canvas          */
+	--surface-1: #101012;      /* raised card          */
+	--surface-2: #17171a;      /* inset / hover        */
+	--stroke: rgba(255, 255, 255, 0.07);
+	--stroke-strong: rgba(255, 255, 255, 0.11);
+	--text-hi: #f6f6f7;
+	--text-mid: #a1a1aa;
+	--text-low: #6b6b74;
+
+	--accent: #7d6bff;
+	--accent-strong: #8b7bff;
+	--accent-soft: rgba(125, 107, 255, 0.12);
+	--accent-ring: rgba(125, 107, 255, 0.4);
 }
 
 html {
@@ -18,5 +60,101 @@ html {
 }
 
 body {
-	font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", sans-serif;
+	font-feature-settings: "cv11", "ss01";
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	background: var(--surface-0);
+	color: var(--text-hi);
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Keyboard focus — one consistent accent ring across the app */
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+   Reusable "classy" primitives (composable with Tailwind utilities).
+------------------------------------------------------------------- */
+
+/* Surface skins: layered, hairline-closed, no heavy shadows */
+.surface {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+}
+.surface-inset {
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+}
+
+/* Accent affordances */
+.accent-text {
+	color: var(--accent);
+}
+.btn-accent {
+	background: var(--accent);
+	color: #fff;
+	border: 1px solid transparent;
+	transition: background-color 0.15s ease, transform 0.05s ease;
+}
+.btn-accent:hover {
+	background: var(--accent-strong);
+}
+.btn-accent:active {
+	transform: translateY(0.5px);
+}
+.btn-ghost {
+	background: transparent;
+	color: var(--text-hi);
+	border: 1px solid var(--stroke);
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-ghost:hover {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+}
+
+/* Hairline divider */
+.hairline {
+	border-top: 1px solid var(--stroke);
+}
+
+/* Scrollbar — subtle, on-theme */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--stroke-strong) transparent;
+}
+
+::selection {
+	background: var(--accent-soft);
+}
+
+/* Mono meta (filenames, sizes, paths) */
+.mono {
+	font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+		Consolas, "Liberation Mono", monospace;
+	font-feature-settings: "cv01", "ss03";
+}
+
+/* ------------------------------------------------------------------
+   React-Toastify — restyle to match the console (dark surface, hairline).
+------------------------------------------------------------------- */
+.Toastify__toast {
+	background: var(--surface-1) !important;
+	border: 1px solid var(--stroke) !important;
+	border-radius: 10px !important;
+	color: var(--text-hi) !important;
+	font-family: inherit !important;
+	font-size: 13px !important;
+	box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5) !important;
+}
+.Toastify__close-button {
+	color: var(--text-low) !important;
+	opacity: 1 !important;
+}
+.Toastify__progress-bar {
+	background: var(--accent) !important;
 }

@@ -1,43 +1,58 @@
-// File list — compact card rows that read as a table on desktop and stay
-// thumb-friendly on mobile (meta line under the name below sm).
+// File list — refined table: icon, name, meta columns. Row hover lifts the
+// surface; icon colour is derived from file type (single accent, restrained).
 import { formatBytes, formatDate, getFileIcon } from "../utils.js";
+import { IconFolder, IconChevron } from "./Icons.jsx";
 
 const FileList = ({ files, onSelect }) => (
-	<ul className="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm dark:divide-stone-800 dark:border-stone-800 dark:bg-stone-900">
-		{files.map((file) => (
-			<li key={file.name}>
-				<button
-					type="button"
-					onClick={() => onSelect(file)}
-					className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-stone-50 focus:outline-none focus-visible:bg-stone-50 sm:py-3.5 dark:hover:bg-stone-800/70 dark:focus-visible:bg-stone-800/70"
-				>
-					<span className="text-2xl" aria-hidden>
-						{file.isDirectory ? "📁" : getFileIcon(file.name)}
-					</span>
-
-					<span className="min-w-0 flex-1">
-						<span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-							{file.name}
+	<ul className="surface overflow-hidden rounded-xl">
+		{/* Header row */}
+		<li className="flex items-center gap-3 border-b border-[var(--stroke)] bg-[var(--surface-2)]/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-[var(--text-low)]">
+			<span className="flex-1">Name</span>
+			<span className="hidden w-40 shrink-0 text-right sm:block">Modified</span>
+			<span className="hidden w-24 shrink-0 text-right sm:block">Size</span>
+			<span className="w-4" />
+		</li>
+		{files.map((file) => {
+			const FileIcon = getFileIcon(file.name);
+			return (
+				<li key={file.name}>
+					<button
+						type="button"
+						onClick={() => onSelect(file)}
+						className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)] focus:outline-none focus-visible:bg-[var(--surface-2)]"
+					>
+						<span className="flex items-center justify-center text-[var(--text-low)] transition-colors group-hover:text-[var(--accent)]">
+							{file.isDirectory ? (
+								<IconFolder size={19} className="accent-text" />
+							) : (
+								<FileIcon size={18} />
+							)}
 						</span>
-						{/* Meta line — mobile only, desktop shows columns on the right */}
-						<span className="block text-xs text-stone-500 sm:hidden dark:text-stone-400">
-							{file.isDirectory ? "Folder" : formatBytes(file.size)} · {formatDate(file.modified)}
+
+						<span className="min-w-0 flex-1">
+							<span className="block truncate text-sm font-medium text-[var(--text-hi)]">
+								{file.name}
+							</span>
+							<span className="block text-xs text-[var(--text-mid)] sm:hidden">
+								{file.isDirectory ? "Folder" : formatBytes(file.size)} ·{" "}
+								{formatDate(file.modified)}
+							</span>
 						</span>
-					</span>
 
-					<span className="hidden shrink-0 text-xs text-stone-500 sm:block dark:text-stone-400">
-						{formatDate(file.modified)}
-					</span>
-					<span className="hidden w-24 shrink-0 text-right text-xs text-stone-500 sm:block dark:text-stone-400">
-						{file.isDirectory ? "Folder" : formatBytes(file.size)}
-					</span>
+						<span className="mono hidden w-40 shrink-0 text-right text-xs text-[var(--text-mid)] sm:block">
+							{formatDate(file.modified)}
+						</span>
+						<span className="mono hidden w-24 shrink-0 text-right text-xs text-[var(--text-mid)] sm:block">
+							{file.isDirectory ? "Folder" : formatBytes(file.size)}
+						</span>
 
-					<span className="text-stone-400" aria-hidden>
-						›
-					</span>
-				</button>
-			</li>
-		))}
+						<span className="w-4 text-[var(--text-low)] opacity-0 transition-opacity group-hover:opacity-100">
+							<IconChevron size={16} />
+						</span>
+					</button>
+				</li>
+			);
+		})}
 	</ul>
 );
 

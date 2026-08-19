@@ -1,7 +1,15 @@
 // Upload modal — bottom sheet on mobile, centered card on desktop.
-// Supports multi-select, drag & drop and shows progress while uploading.
+// Supports multi-select, drag & drop, live progress and a designed drop zone.
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
+import {
+	IconUpload,
+	IconX,
+	IconCloud,
+	IconCheck,
+	IconLoader,
+} from "./Icons.jsx";
+import { formatBytes } from "../utils.js";
 
 const UploadModal = ({ onClose, onUploaded }) => {
 	const [files, setFiles] = useState([]);
@@ -14,6 +22,8 @@ const UploadModal = ({ onClose, onUploaded }) => {
 		const picked = Array.from(list || []);
 		if (picked.length) setFiles((prev) => [...prev, ...picked]);
 	};
+
+	const remove = (i) => setFiles((prev) => prev.filter((_, idx) => idx !== i));
 
 	const upload = async () => {
 		if (!files.length) return;
@@ -29,8 +39,10 @@ const UploadModal = ({ onClose, onUploaded }) => {
 			if (!res.ok) throw new Error(json.message || "Upload failed");
 
 			setProgress(100);
-			toast.success(`Uploaded ${json.files.length} file${json.files.length !== 1 ? "s" : ""} 🎉`);
-			setTimeout(onUploaded, 700); // let the success bar render before closing
+			toast.success(
+				`Uploaded ${json.files.length} file${json.files.length !== 1 ? "s" : ""}`
+			);
+			setTimeout(onUploaded, 600); // let the success state render before closing
 		} catch (err) {
 			toast.error(err.message || "Upload failed");
 			setUploading(false);
@@ -40,15 +52,15 @@ const UploadModal = ({ onClose, onUploaded }) => {
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center"
+			className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-[2px] sm:items-center"
 			onClick={() => !uploading && onClose()}
 		>
 			<div
-				className="w-full rounded-t-2xl border border-stone-200 bg-white p-6 shadow-xl sm:max-w-md sm:rounded-xl dark:border-stone-700 dark:bg-stone-900"
+				className="surface w-full rounded-t-2xl p-6 shadow-2xl sm:max-w-md sm:rounded-xl"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-lg font-medium text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-semibold tracking-tight text-[var(--text-hi)]">
 						Upload Files
 					</h2>
 					<button
@@ -56,9 +68,9 @@ const UploadModal = ({ onClose, onUploaded }) => {
 						onClick={onClose}
 						disabled={uploading}
 						aria-label="Close"
-						className="flex h-9 w-9 items-center justify-center rounded-md text-lg text-stone-500 transition hover:bg-stone-100 disabled:opacity-40 dark:hover:bg-stone-800"
+						className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-mid)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-hi)] disabled:opacity-40"
 					>
-						✕
+						<IconX size={16} />
 					</button>
 				</div>
 
@@ -74,10 +86,10 @@ const UploadModal = ({ onClose, onUploaded }) => {
 						setDragOver(false);
 						pick(e.dataTransfer.files);
 					}}
-					className={`block cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
+					className={`block cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition ${
 						dragOver
-							? "border-purple-500 bg-purple-500/10"
-							: "border-stone-300 hover:border-purple-400 dark:border-stone-700"
+							? "border-[var(--accent)] bg-[var(--accent-soft)]"
+							: "border-[var(--stroke-strong)] hover:border-[var(--accent)]/60 hover:bg-[var(--surface-2)]/50"
 					}`}
 				>
 					<input
@@ -88,57 +100,88 @@ const UploadModal = ({ onClose, onUploaded }) => {
 						disabled={uploading}
 						className="hidden"
 					/>
-					<div className="text-3xl" aria-hidden>
-						📤
-					</div>
-					<p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+					<span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--accent)] ring-1 ring-[var(--stroke)]">
+						<IconCloud size={22} />
+					</span>
+					<p className="mt-3 text-sm font-medium text-[var(--text-hi)]">
 						Tap to choose files or drop them here
 					</p>
-					<p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-						Anything goes — they land under /static/
+					<p className="mt-1 text-xs text-[var(--text-low)]">
+						Anything goes — they land under a shareable link
 					</p>
 				</label>
 
-				{/* Pending selection */}
+				{/* Selected files */}
 				{files.length > 0 && (
-					<ul className="mt-3 max-h-32 space-y-1 overflow-y-auto">
+					<ul className="mt-4 space-y-2">
 						{files.map((f, i) => (
 							<li
 								key={`${f.name}-${i}`}
-								className="flex items-center justify-between rounded-md bg-stone-100 px-3 py-1.5 text-xs text-stone-700 dark:bg-stone-800 dark:text-stone-300"
+								className="flex items-center gap-3 rounded-lg border border-[var(--stroke)] bg-[var(--surface-2)]/40 px-3 py-2"
 							>
-								<span className="min-w-0 truncate">{f.name}</span>
-								<span className="ml-2 shrink-0 text-stone-500 dark:text-stone-400">
-									{(f.size / 1024).toFixed(1)} KB
+								<span className="mono min-w-0 flex-1 truncate text-xs text-[var(--text-hi)]">
+									{f.name}
 								</span>
+								<span className="mono shrink-0 text-[11px] text-[var(--text-low)]">
+									{formatBytes(f.size)}
+								</span>
+								<button
+									type="button"
+									onClick={() => remove(i)}
+									disabled={uploading}
+									className="shrink-0 text-[var(--text-low)] transition hover:text-[var(--bad)] disabled:opacity-40"
+									aria-label={`Remove ${f.name}`}
+								>
+									<IconX size={14} />
+								</button>
 							</li>
 						))}
 					</ul>
 				)}
 
-				{/* Progress */}
 				{uploading && (
 					<div className="mt-4">
-						<div className="h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
+						<div className="h-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
 							<div
-								className="h-full rounded-full bg-purple-500 transition-all"
+								className="h-full rounded-full bg-[var(--accent)] transition-all duration-200"
 								style={{ width: `${progress}%` }}
 							/>
 						</div>
-						<p className="mt-1 text-center text-xs text-stone-500 dark:text-stone-400">
-							Uploading... {progress}%
+						<p className="mt-2 text-center text-xs text-[var(--text-low)]">
+							{progress < 100 ? "Uploading…" : "Done"}
 						</p>
 					</div>
 				)}
 
-				<button
-					type="button"
-					onClick={upload}
-					disabled={!files.length || uploading}
-					className="mt-4 w-full rounded-md bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					{uploading ? "Uploading…" : `Upload ${files.length ? `(${files.length})` : ""}`}
-				</button>
+				<div className="mt-5 flex gap-3">
+					<button
+						type="button"
+						onClick={upload}
+						disabled={!files.length || uploading}
+						className="btn-accent inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{uploading && progress >= 100 ? (
+							<IconCheck size={15} />
+						) : uploading ? (
+							<IconLoader size={15} />
+						) : (
+							<IconUpload size={15} />
+						)}
+						{uploading && progress >= 100
+							? "Done"
+							: uploading
+							? "Uploading…"
+							: "Upload"}
+					</button>
+					<button
+						type="button"
+						onClick={onClose}
+						disabled={uploading}
+						className="btn-ghost flex-1 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-40"
+					>
+						Cancel
+					</button>
+				</div>
 			</div>
 		</div>
 	);
