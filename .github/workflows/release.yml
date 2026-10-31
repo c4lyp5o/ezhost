@@ -1,0 +1,102 @@
+# Package a runnable bundle and attach it to a GitHub Release.
+#
+# The "give them something to download" path, alongside the GHCR image. A Bun
+# app is platform independent, so there is one bundle rather than a matrix:
+#
+#   ezhost_<version>.tar.gz / .zip
+#     ezhost_<version>/
+#       backend/      server source (no node_modules, no tests)
+#       dist/         built frontend
+#       public/       uploads directory (ships HELLO.md)
+#       README.md
+#       start.sh      bun install --production && bun index.js
+#   SHA256SUMS
+#
+# Running it needs bun (https://bun.sh) only — no build step, no Docker.
+#
+# Trigger: git tag v1.0.0 && git push origin v1.0.0
+# Gate:    the reusable test workflow; a red suite never produces an asset.
+name: Release bundle
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the release and upload assets
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout source
+        uses: actions/checkout@v5
+      - name: 🏷️ Tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          want=$(node -p "require('./package.json').version")
+          tag="${GITHUB_REF_NAME#v}"; tag="${tag%%-*}"
+          if [ -z "$want" ] || [ "$tag" != "$want" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version ($want)"
+            exit 1
+          fi
+
+  test:
+    needs: version
+    uses: ./.github/workflows/test.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout source
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 🔨 Build the bundle
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          name="ezhost_${VERSION}"
+          out="bundle/${name}"
+          mkdir -p "${out}/backend"
+          # Server source only. No node_modules (start.sh installs them), no
+          # tests, and never a local sqlite DB.
+          cp -r backend/index.js backend/config.js backend/logger.js \
+                backend/utils.js backend/package.json backend/bun.lock \
+                backend/plugins backend/routes backend/services "${out}/backend/"
+          # vite writes to ../dist (repo root).
+          (cd frontend && bun install --frozen-lockfile && bun run build)
+          cp -r dist "${out}/dist"
+          mkdir -p "${out}/public" "${out}/logs" && cp public/HELLO.md "${out}/public/"
+          cp README.md "${out}/"
+          cat > "${out}/start.sh" <<'SH'
+          #!/bin/sh
+          # First run: set ADMIN_PASSWORD (only read when the DB is empty).
+          #   ADMIN_PASSWORD=change-me ./start.sh
+          set -e
+          cd "$(dirname "$0")/backend"
+          bun install --production
+          NODE_ENV=production exec bun index.js
+          SH
+          chmod +x "${out}/start.sh"
+          tar -C bundle -czf "bundle/${name}.tar.gz" "${name}"
+          (cd bundle && python3 -m zipfile -c "${name}.zip" "${name}")
+          rm -rf "${out}"
+          (cd bundle && sha256sum *.tar.gz *.zip > SHA256SUMS)
+          echo "--- artifacts ---"; ls -la bundle
+
+      - name: 📦 Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: bundle/*

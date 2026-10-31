@@ -1,2 +1,12 @@
 node_modules
+**/node_modules
+# Never bake a local admin/session DB into the image.
+**/*.sqlite
+**/*.sqlite-journal
+**/*.sqlite-wal
+**/*.sqlite-shm
 npm-debug.log
+dist
+logs
+.git
+*.log

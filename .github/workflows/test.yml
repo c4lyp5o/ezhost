@@ -1,0 +1,62 @@
+# Test gate — run BEFORE anything publishes.
+#
+# docker-publish.yml and release.yml both call this workflow (`workflow_call`),
+# and their build jobs say `needs: test`, so a red suite never produces an image
+# or a release asset.
+#
+# It also runs on `pull_request` so a PR never shows "no checks reported".
+# There is no `push` trigger, so a merge commit is tested exactly once — by the
+# publish caller.
+name: Tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout source
+        uses: actions/checkout@v5
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Not `bun install` at the root: its "install" script would re-run both
+      # installs without --frozen-lockfile.
+      - name: 📦 Install backend deps
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: 📦 Install frontend deps
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      # bunfig.toml preloads tests/setup.js: throwaway DB and upload dir.
+      - name: 🧪 Backend tests
+        working-directory: backend
+        run: bun test
+
+      - name: 🧹 Lint frontend
+        working-directory: frontend
+        run: bun run lint
+
+      - name: 🌐 Build frontend
+        working-directory: frontend
+        run: bun run build
+
+      # Proves the production image still builds, so a broken Dockerfile fails
+      # the PR instead of the release.
+      - name: 🐳 Docker build
+        run: docker build -t ezhost:ci .
