@@ -14,6 +14,8 @@ FROM oven/bun:1.3-alpine
 RUN apk add --no-cache curl tzdata
 
 ENV TZ=Asia/Kuala_Lumpur
+# All persistent state outside public/ lives in /app/data (mount a volume).
+ENV EZHOST_DB=/app/data/ezhost.sqlite
 WORKDIR /app
 
 # Backend deps first (layer-cached separately from source)
@@ -24,6 +26,11 @@ RUN cd backend && bun install --production
 COPY backend ./backend
 COPY public ./public
 COPY --from=builder /app/dist ./dist
+
+# Run unprivileged: the bun user (uid 1000, from the base image) only needs
+# write access to uploads and the DB directory.
+RUN mkdir -p /app/data && chown -R bun:bun /app/public /app/data
+USER bun
 
 WORKDIR /app/backend
 EXPOSE 5000
