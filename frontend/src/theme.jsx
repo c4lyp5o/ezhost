@@ -1,11 +1,7 @@
-// Theme provider — dark-first with a user-toggleable light mode.
-// The choice persists under "ezhost-theme"; dark wins unless the user
-// explicitly chose light. The html.dark class drives Tailwind's dark: variant.
-import { createContext, useContext, useEffect, useState } from "react";
-
-const STORAGE_KEY = "ezhost-theme";
-
-const ThemeContext = createContext(null);
+// Theme provider — dark-first with a user-toggleable light mode. The choice
+// persists under "ezhost-theme"; html.dark drives Tailwind's dark: variant.
+import { useEffect, useState } from "react";
+import { STORAGE_KEY, ThemeContext } from "./theme-context.js";
 
 export const ThemeProvider = ({ children }) => {
 	const [theme, setTheme] = useState(() => {
@@ -18,10 +14,13 @@ export const ThemeProvider = ({ children }) => {
 
 	useEffect(() => {
 		document.documentElement.classList.toggle("dark", theme === "dark");
+		document
+			.querySelector('meta[name="theme-color"]')
+			?.setAttribute("content", theme === "dark" ? "#0F1A2E" : "#EEF2F7");
 		try {
 			localStorage.setItem(STORAGE_KEY, theme);
 		} catch {
-			/* private mode — toggle still works for the session */
+			/* private mode — the toggle still works for this visit */
 		}
 	}, [theme]);
 
@@ -33,5 +32,3 @@ export const ThemeProvider = ({ children }) => {
 		</ThemeContext.Provider>
 	);
 };
-
-export const useTheme = () => useContext(ThemeContext);

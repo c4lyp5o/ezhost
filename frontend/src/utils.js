@@ -81,6 +81,42 @@ export const formatBytes = (bytes) => {
 	return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 };
 
+// Mirrors the backend's upload rules (backend/config.js MAX_UPLOAD_BYTES and
+// files.service.js DISALLOWED_EXT) so people learn before uploading, not after.
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+const BLOCKED_EXT = new Set([
+	"svg", "xml", "xsl", "dtd",
+	"hta", "exe", "pif", "scr", "bat", "cmd", "ps1", "sh",
+]);
+
+// Returns a reason string when the server would refuse this file, else null.
+export const fileProblem = (file) => {
+	const ext = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "";
+	if (BLOCKED_EXT.has(ext)) return `.${ext} files aren't allowed`;
+	if (file.size > MAX_UPLOAD_BYTES) return "Over the 100 MB limit";
+	if (file.size === 0) return "File is empty";
+	return null;
+};
+
+const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+const STEPS = [
+	["year", 365 * 24 * 3600],
+	["month", 30 * 24 * 3600],
+	["week", 7 * 24 * 3600],
+	["day", 24 * 3600],
+	["hour", 3600],
+	["minute", 60],
+];
+
+// "3 hours ago", "yesterday", "just now".
+export const formatRelative = (iso) => {
+	const secs = (new Date(iso).getTime() - Date.now()) / 1000;
+	for (const [unit, size] of STEPS) {
+		if (Math.abs(secs) >= size) return rtf.format(Math.round(secs / size), unit);
+	}
+	return "just now";
+};
+
 export const formatDate = (iso) =>
 	new Date(iso).toLocaleString("en-GB", {
 		day: "2-digit",

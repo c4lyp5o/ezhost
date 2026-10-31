@@ -1,138 +1,122 @@
-// File info sheet — bottom sheet on mobile, centered card on desktop.
-// Offers the shareable URL, copy action and an external open link.
+// File details: image preview when it's an image, the public link with
+// copy, size/date/type, and Open. Folders get a short explanation instead.
 import { useState } from "react";
-import { formatBytes, getFileIcon } from "../utils.js";
-import {
-	IconFolder,
-	IconCopy,
-	IconCheck,
-	IconExternal,
-	IconX,
-} from "./Icons.jsx";
+import { absoluteUrl, useCopy } from "../hooks.js";
+import { formatBytes, formatDate, getFileIcon } from "../utils.js";
+import Dialog from "./Dialog.jsx";
+import { IconFolder, IconCopy, IconCheck, IconExternal, IconX } from "./Icons.jsx";
 
-const FileInfoModal = ({ file, onClose }) => {
-	const [copied, setCopied] = useState(false);
-	const url = new URL(file.url, window.location.origin).href;
+const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp", "avif"]);
+const extOf = (name) => (name.includes(".") ? name.split(".").pop().toLowerCase() : "");
 
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText(url);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 1500);
-		} catch {
-			/* clipboard blocked — the open button still works */
-		}
-	};
+const Meta = ({ label, children }) => (
+	<div>
+		<dt className="text-[12.5px] text-[var(--text-low)]">{label}</dt>
+		<dd className="num mt-0.5 text-sm text-[var(--text-hi)]">{children}</dd>
+	</div>
+);
 
-	const FileIcon = getFileIcon(file.name);
-	const Meta = ({ label, value }) => (
-		<div>
-			<dt className="text-[11px] uppercase tracking-wider text-[var(--text-low)]">
-				{label}
-			</dt>
-			<dd className="mono mt-0.5 text-xs text-[var(--text-hi)]">{value}</dd>
-		</div>
-	);
-
+const Preview = ({ src, name }) => {
+	const [failed, setFailed] = useState(false);
+	if (failed) return null;
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-[2px] sm:items-center"
-			onClick={onClose}
-		>
-			<div
-				className="surface w-full rounded-t-2xl p-6 shadow-2xl sm:max-w-md sm:rounded-xl"
-				onClick={(e) => e.stopPropagation()}
-			>
-				<div className="mb-5 flex items-start justify-between gap-3">
-					<div className="flex items-center gap-3">
-						<span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--surface-2)] ring-1 ring-[var(--stroke)]">
-							{file.isDirectory ? (
-								<IconFolder size={22} className="accent-text" />
-							) : (
-								<FileIcon size={21} className="accent-text" />
-							)}
-						</span>
-						<div className="min-w-0">
-							<h2 className="truncate text-sm font-semibold tracking-tight text-[var(--text-hi)]">
-								{file.name}
-							</h2>
-							<p className="text-xs text-[var(--text-mid)]">
-								{file.isDirectory ? "Folder" : formatBytes(file.size)}
-							</p>
-						</div>
-					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						aria-label="Close"
-						className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--text-mid)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-hi)]"
-					>
-						<IconX size={16} />
-					</button>
-				</div>
-
-				{!file.isDirectory && (
-					<>
-						<dl className="mb-4 grid grid-cols-2 gap-4">
-							<Meta label="Size" value={formatBytes(file.size)} />
-							<Meta label="Modified" value={formatDateOnly(file)} />
-						</dl>
-
-						<div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--stroke)] bg-[var(--surface-2)]/50 p-1.5 pl-3">
-							<span className="mono min-w-0 flex-1 truncate text-xs text-[var(--text-mid)]">
-								{url}
-							</span>
-							<button
-								type="button"
-								onClick={copy}
-								className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition ${
-									copied
-										? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-										: "btn-ghost"
-								}`}
-							>
-								{copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
-								{copied ? "Copied" : "Copy"}
-							</button>
-						</div>
-					</>
-				)}
-
-				<div className="flex gap-3">
-					{!file.isDirectory && (
-						<a
-							href={url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="btn-accent inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium"
-						>
-							<IconExternal size={15} />
-							Open
-						</a>
-					)}
-					<button
-						type="button"
-						onClick={onClose}
-						className={`btn-ghost rounded-lg px-4 py-2.5 text-sm font-medium ${
-							file.isDirectory ? "flex-1" : ""
-						}`}
-					>
-						Close
-					</button>
-				</div>
-			</div>
+		<div className="mb-5 flex max-h-64 items-center justify-center overflow-hidden rounded-xl border border-[var(--stroke)] bg-[repeating-conic-gradient(var(--surface-2)_0%_25%,transparent_0%_50%)] bg-[length:20px_20px]">
+			<img
+				src={src}
+				alt={`Preview of ${name}`}
+				className="max-h-64 w-auto object-contain"
+				onError={() => setFailed(true)}
+			/>
 		</div>
 	);
 };
 
-const formatDateOnly = (file) =>
-	new Date(file.modified).toLocaleString("en-GB", {
-		day: "2-digit",
-		month: "short",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-		hour12: false,
-	});
+const FileInfoModal = ({ file, open, onClose }) => {
+	const [copied, copy] = useCopy();
+	if (!file) return null;
+	const url = absoluteUrl(file.url);
+	const ext = extOf(file.name);
+	const FileIcon = file.isDirectory ? IconFolder : getFileIcon(file.name);
+
+	return (
+		<Dialog open={open} onClose={onClose} labelledBy="file-title" wide>
+			<div className="mb-5 flex items-start gap-3">
+				<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--label)] text-[var(--label-ink)]">
+					<FileIcon size={21} />
+				</span>
+				<div className="min-w-0 flex-1">
+					<h2 id="file-title" className="display truncate text-xl font-bold">
+						{file.name}
+					</h2>
+					<p className="text-[13px] text-[var(--text-mid)]">
+						{file.isDirectory ? "Folder" : formatBytes(file.size)}
+					</p>
+				</div>
+				<button
+					type="button"
+					onClick={onClose}
+					aria-label="Close"
+					className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--text-mid)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-hi)]"
+				>
+					<IconX size={17} />
+				</button>
+			</div>
+
+			{file.isDirectory ? (
+				<p className="mb-5 text-sm text-[var(--text-mid)]">
+					Folders are created by the admin to keep things organised. Uploads go
+					to the main list.
+				</p>
+			) : (
+				<>
+					{IMAGE_EXT.has(ext) && <Preview src={url} name={file.name} />}
+
+					<dl className="mb-5 grid grid-cols-3 gap-4">
+						<Meta label="Size">{formatBytes(file.size)}</Meta>
+						<Meta label="Type">{ext ? `.${ext}` : "None"}</Meta>
+						<Meta label="Uploaded">{formatDate(file.modified)}</Meta>
+					</dl>
+
+					<div className="mb-5 flex items-center gap-2 rounded-xl border border-[var(--stroke)] bg-[var(--surface-2)]/50 p-1.5 pl-3">
+						<span className="url min-w-0 flex-1 truncate text-[var(--text-mid)]">{url}</span>
+						<button
+							type="button"
+							onClick={() => copy(url)}
+							className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+								copied ? "bg-[var(--label)] text-[var(--label-ink)]" : "btn-ghost"
+							}`}
+						>
+							{copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+							{copied ? "Copied" : "Copy link"}
+						</button>
+					</div>
+				</>
+			)}
+
+			<div className="flex gap-3">
+				{!file.isDirectory && (
+					<a
+						href={url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="btn-label inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px]"
+					>
+						<IconExternal size={16} />
+						Open file
+					</a>
+				)}
+				<button
+					type="button"
+					onClick={onClose}
+					className={`btn-ghost rounded-xl px-4 py-3 text-[15px] font-medium ${
+						file.isDirectory ? "flex-1" : ""
+					}`}
+				>
+					Close
+				</button>
+			</div>
+		</Dialog>
+	);
+};
 
 export default FileInfoModal;

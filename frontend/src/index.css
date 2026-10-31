@@ -1,58 +1,63 @@
 @import "tailwindcss";
 
-/* Class-based dark mode — the html.dark class drives every dark: variant.
-   Dark is the DEFAULT (dark-first), set by the bootstrap script in index.html
-   before first paint so there's never a light flash. */
+/* Class-based dark mode — html.dark drives every dark: variant. Dark is the
+   default, applied by the bootstrap script in index.html before first paint. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   EZhost design tokens — "Linear-grade dark file console"
-   One confident accent (#7d6bff family), warm layered surfaces,
-   hairline borders, restrained radius, disciplined type.
+   ezhost tokens — "shipping dock"
+   Files are parcels, links are their labels. Harbor navy surfaces, one
+   label-yellow accent used as a FILL (navy text on it), never as body text.
    ============================================================ */
 
 :root {
 	color-scheme: light;
 
-	/* Surfaces — light mode (warm paper, not flat white) */
-	--surface-0: #fafaf9;      /* page canvas          */
-	--surface-1: #ffffff;      /* raised card          */
-	--surface-2: #f4f4f5;      /* inset / hover        */
-	--stroke: #e4e4e7;         /* hairline borders     */
-	--text-hi: #18181b;        /* primary text         */
-	--text-mid: #52525b;       /* secondary text       */
-	--text-low: #a1a1aa;       /* muted / placeholder  */
+	--surface-0: #eef2f7; /* paper            */
+	--surface-1: #ffffff; /* panel            */
+	--surface-2: #e3e9f2; /* inset / hover    */
+	--stroke: #d3dbe7;
+	--stroke-strong: #b9c4d6;
+	--text-hi: #0f1a2e;
+	--text-mid: #56637f;
+	--text-low: #7f8aa3;
 
-	/* Accent — confident indigo-violet, used sparingly */
-	--accent: #6d5bff;
-	--accent-strong: #5a47e6;
-	--accent-soft: rgba(109, 91, 255, 0.08);
-	--accent-ring: rgba(109, 91, 255, 0.35);
+	--label: #ffc93c; /* label yellow (fill) */
+	--label-ink: #0f1a2e; /* text on label       */
+	--label-text: #8a5d00; /* yellow-family text on light bg */
+	--label-soft: rgba(255, 201, 60, 0.22);
+	--ring: rgba(15, 26, 46, 0.55);
 
-	/* Status */
-	--good: #10b981;
-	--bad: #ef4444;
+	--good: #12804f;
+	--bad: #c4362a;
+	--bad-soft: rgba(196, 54, 42, 0.08);
+	--bad-ink: #ffffff; /* text on a --bad fill */
 
-	font-feature-settings: "cv11", "ss01", "cv01";
+	--font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+	--font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+	--font-url: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .dark {
 	color-scheme: dark;
 
-	/* Surfaces — dark mode (near-black warm canvas, layered by border) */
-	--surface-0: #0a0a0c;      /* page canvas          */
-	--surface-1: #101012;      /* raised card          */
-	--surface-2: #17171a;      /* inset / hover        */
-	--stroke: rgba(255, 255, 255, 0.07);
-	--stroke-strong: rgba(255, 255, 255, 0.11);
-	--text-hi: #f6f6f7;
-	--text-mid: #a1a1aa;
-	--text-low: #6b6b74;
+	--surface-0: #0f1a2e; /* harbor ink */
+	--surface-1: #16233d; /* hull       */
+	--surface-2: #1d2c4b;
+	--stroke: #2a3a5c; /* rope       */
+	--stroke-strong: #3a4d74;
+	--text-hi: #e6ecf5; /* fog        */
+	--text-mid: #a9b5cf;
+	--text-low: #8c9ab8; /* tide       */
 
-	--accent: #7d6bff;
-	--accent-strong: #8b7bff;
-	--accent-soft: rgba(125, 107, 255, 0.12);
-	--accent-ring: rgba(125, 107, 255, 0.4);
+	--label-text: #ffc93c;
+	--label-soft: rgba(255, 201, 60, 0.14);
+	--ring: rgba(255, 201, 60, 0.75);
+
+	--good: #3dd68c;
+	--bad: #ff7a6e;
+	--bad-soft: rgba(255, 122, 110, 0.1);
+	--bad-ink: #0f1a2e;
 }
 
 html {
@@ -60,52 +65,79 @@ html {
 }
 
 body {
-	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
-		"Helvetica Neue", sans-serif;
-	font-feature-settings: "cv11", "ss01";
+	font-family: var(--font-ui);
+	font-size: 15px;
+	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
-	text-rendering: optimizeLegibility;
 	background: var(--surface-0);
 	color: var(--text-hi);
 	transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Keyboard focus — one consistent accent ring across the app */
 :focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid var(--ring);
 	outline-offset: 2px;
 }
 
-/* ------------------------------------------------------------------
-   Reusable "classy" primitives (composable with Tailwind utilities).
-------------------------------------------------------------------- */
+::selection {
+	background: var(--label);
+	color: var(--label-ink);
+}
 
-/* Surface skins: layered, hairline-closed, no heavy shadows */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--stroke-strong) transparent;
+}
+
+/* ---------------------------------------------------------------
+   Type
+---------------------------------------------------------------- */
+.display {
+	text-wrap: balance;
+	font-family: var(--font-display);
+	font-optical-sizing: auto;
+	letter-spacing: -0.025em;
+	line-height: 1.02;
+}
+.url {
+	font-family: var(--font-url);
+	font-size: 12.5px;
+}
+.num {
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------
+   Surfaces & controls
+---------------------------------------------------------------- */
 .surface {
 	background: var(--surface-1);
 	border: 1px solid var(--stroke);
 }
-.surface-inset {
+
+.btn-label {
+	background: var(--label);
+	color: var(--label-ink);
+	font-weight: 600;
+	border: 1px solid transparent;
+	box-shadow: inset 0 -2px 0 rgba(15, 26, 46, 0.18);
+	transition: filter 0.15s ease, transform 0.06s ease;
+}
+.btn-label:hover {
+	filter: brightness(1.06);
+}
+.btn-label:active {
+	transform: translateY(1px);
+}
+.btn-label:disabled {
 	background: var(--surface-2);
-	border: 1px solid var(--stroke);
+	color: var(--text-low);
+	box-shadow: none;
+	filter: none;
+	cursor: not-allowed;
+	transform: none;
 }
 
-/* Accent affordances */
-.accent-text {
-	color: var(--accent);
-}
-.btn-accent {
-	background: var(--accent);
-	color: #fff;
-	border: 1px solid transparent;
-	transition: background-color 0.15s ease, transform 0.05s ease;
-}
-.btn-accent:hover {
-	background: var(--accent-strong);
-}
-.btn-accent:active {
-	transform: translateY(0.5px);
-}
 .btn-ghost {
 	background: transparent;
 	color: var(--text-hi);
@@ -117,44 +149,95 @@ body {
 	border-color: var(--stroke-strong);
 }
 
-/* Hairline divider */
-.hairline {
-	border-top: 1px solid var(--stroke);
+.field {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	color: var(--text-hi);
+	transition: border-color 0.15s ease;
+}
+.field::placeholder {
+	color: var(--text-low);
+}
+.field:hover {
+	border-color: var(--stroke-strong);
+}
+.field:focus {
+	outline: none;
+	border-color: var(--text-hi);
 }
 
-/* Scrollbar — subtle, on-theme */
-* {
-	scrollbar-width: thin;
-	scrollbar-color: var(--stroke-strong) transparent;
+/* ---------------------------------------------------------------
+   The dock — the one loud element. Hazard-tape edge on the left,
+   a dashed drop area, and the three.js parcel.
+---------------------------------------------------------------- */
+.hazard {
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--label) 0 10px,
+		var(--label-ink) 10px 20px
+	);
+}
+.dark .hazard {
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--label) 0 10px,
+		#0a1222 10px 20px
+	);
+}
+.dock-drop {
+	border: 2px dashed var(--stroke-strong);
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.dock-drop[data-over="true"] {
+	border-color: var(--label);
+	background: var(--label-soft);
 }
 
-::selection {
-	background: var(--accent-soft);
+/* Fresh upload: a label-yellow wash that fades out on the new rows. */
+@keyframes fresh {
+	from {
+		background-color: var(--label-soft);
+		box-shadow: inset 3px 0 0 var(--label);
+	}
+	to {
+		background-color: transparent;
+		box-shadow: inset 3px 0 0 transparent;
+	}
+}
+.row-fresh {
+	animation: fresh 2.4s ease-out 0.2s both;
 }
 
-/* Mono meta (filenames, sizes, paths) */
-.mono {
-	font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-		Consolas, "Liberation Mono", monospace;
-	font-feature-settings: "cv01", "ss03";
+@media (prefers-reduced-motion: reduce) {
+	.row-fresh {
+		animation: none;
+		box-shadow: inset 3px 0 0 var(--label);
+	}
+	* {
+		transition-duration: 0.01ms !important;
+	}
 }
 
-/* ------------------------------------------------------------------
-   React-Toastify — restyle to match the console (dark surface, hairline).
-------------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   React-Toastify — restyled as dock labels.
+---------------------------------------------------------------- */
 .Toastify__toast {
 	background: var(--surface-1) !important;
 	border: 1px solid var(--stroke) !important;
-	border-radius: 10px !important;
+	border-left: 4px solid var(--label) !important;
+	border-radius: 8px !important;
 	color: var(--text-hi) !important;
-	font-family: inherit !important;
-	font-size: 13px !important;
-	box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5) !important;
+	font-family: var(--font-ui) !important;
+	font-size: 14px !important;
+	box-shadow: 0 16px 40px -16px rgba(5, 10, 20, 0.55) !important;
+}
+.Toastify__toast--error {
+	border-left-color: var(--bad) !important;
 }
 .Toastify__close-button {
 	color: var(--text-low) !important;
 	opacity: 1 !important;
 }
 .Toastify__progress-bar {
-	background: var(--accent) !important;
+	background: var(--label) !important;
 }

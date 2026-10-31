@@ -1,59 +1,95 @@
-// File list — refined table: icon, name, meta columns. Row hover lifts the
-// surface; icon colour is derived from file type (single accent, restrained).
-import { formatBytes, formatDate, getFileIcon } from "../utils.js";
-import { IconFolder, IconChevron } from "./Icons.jsx";
+// The manifest: one row per file. The whole row opens details; "Copy link"
+// is right there on the row, since copying the link is the main job.
+// Rows animate into place when the list re-sorts or filters (Motion layout);
+// rows from the latest upload get a brief label-yellow wash.
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { toast } from "react-toastify";
+import { absoluteUrl, useCopy } from "../hooks.js";
+import { formatBytes, formatDate, formatRelative, getFileIcon } from "../utils.js";
+import { IconFolder, IconCopy, IconCheck } from "./Icons.jsx";
 
-const FileList = ({ files, onSelect }) => (
-	<ul className="surface overflow-hidden rounded-xl">
-		{/* Header row */}
-		<li className="flex items-center gap-3 border-b border-[var(--stroke)] bg-[var(--surface-2)]/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-[var(--text-low)]">
-			<span className="flex-1">Name</span>
-			<span className="hidden w-40 shrink-0 text-right sm:block">Modified</span>
-			<span className="hidden w-24 shrink-0 text-right sm:block">Size</span>
-			<span className="w-4" />
-		</li>
-		{files.map((file) => {
-			const FileIcon = getFileIcon(file.name);
-			return (
-				<li key={file.name}>
-					<button
-						type="button"
-						onClick={() => onSelect(file)}
-						className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)] focus:outline-none focus-visible:bg-[var(--surface-2)]"
-					>
-						<span className="flex items-center justify-center text-[var(--text-low)] transition-colors group-hover:text-[var(--accent)]">
+const CopyLink = ({ file }) => {
+	const [copied, copy] = useCopy();
+	return (
+		<button
+			type="button"
+			onClick={async () => {
+				if (await copy(absoluteUrl(file.url))) toast.success(`Link to ${file.name} copied`);
+			}}
+			aria-label={`Copy link to ${file.name}`}
+			className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium transition ${
+				copied
+					? "bg-[var(--label)] text-[var(--label-ink)]"
+					: "text-[var(--text-mid)] hover:bg-[var(--surface-2)] hover:text-[var(--text-hi)]"
+			}`}
+		>
+			{copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+			<span className="hidden sm:inline">{copied ? "Copied" : "Copy link"}</span>
+		</button>
+	);
+};
+
+const FileList = ({ files, fresh, onSelect }) => {
+	const reduce = useReducedMotion();
+	return (
+		<ul className="surface divide-y divide-[var(--stroke)] overflow-hidden rounded-2xl">
+			<AnimatePresence initial={false}>
+				{files.map((file) => {
+					const FileIcon = file.isDirectory ? IconFolder : getFileIcon(file.name);
+					return (
+						<motion.li
+							key={file.name}
+							layout={reduce ? false : "position"}
+							initial={reduce ? false : { opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							transition={{ duration: 0.2 }}
+							className={`flex items-center gap-1 pr-2 ${fresh?.has(file.name) ? "row-fresh" : ""}`}
+						>
+							<button
+								type="button"
+								onClick={() => onSelect(file)}
+								className="flex min-w-0 flex-1 items-center gap-3.5 py-3 pr-2 pl-4 text-left transition-colors hover:bg-[var(--surface-2)]/60 sm:pl-5"
+							>
+								<span
+									className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+										file.isDirectory
+											? "bg-[var(--surface-2)] text-[var(--label-text)]"
+											: "bg-[var(--surface-2)] text-[var(--text-mid)]"
+									}`}
+								>
+									<FileIcon size={18} />
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="block truncate text-[15px] font-medium text-[var(--text-hi)]">
+										{file.name}
+									</span>
+									<span className="num mt-0.5 flex gap-3 text-[13px] text-[var(--text-low)] sm:hidden">
+										<span>{file.isDirectory ? "Folder" : formatBytes(file.size)}</span>
+										<span>{formatRelative(file.modified)}</span>
+									</span>
+								</span>
+								<span className="num hidden w-24 shrink-0 text-right text-[13px] text-[var(--text-mid)] sm:block">
+									{file.isDirectory ? "Folder" : formatBytes(file.size)}
+								</span>
+								<span
+									className="num hidden w-32 shrink-0 text-right text-[13px] text-[var(--text-low)] sm:block"
+									title={formatDate(file.modified)}
+								>
+									{formatRelative(file.modified)}
+								</span>
+							</button>
 							{file.isDirectory ? (
-								<IconFolder size={19} className="accent-text" />
+								<span aria-hidden="true" className="w-9 shrink-0 sm:w-[106px]" />
 							) : (
-								<FileIcon size={18} />
+								<CopyLink file={file} />
 							)}
-						</span>
-
-						<span className="min-w-0 flex-1">
-							<span className="block truncate text-sm font-medium text-[var(--text-hi)]">
-								{file.name}
-							</span>
-							<span className="block text-xs text-[var(--text-mid)] sm:hidden">
-								{file.isDirectory ? "Folder" : formatBytes(file.size)} ·{" "}
-								{formatDate(file.modified)}
-							</span>
-						</span>
-
-						<span className="mono hidden w-40 shrink-0 text-right text-xs text-[var(--text-mid)] sm:block">
-							{formatDate(file.modified)}
-						</span>
-						<span className="mono hidden w-24 shrink-0 text-right text-xs text-[var(--text-mid)] sm:block">
-							{file.isDirectory ? "Folder" : formatBytes(file.size)}
-						</span>
-
-						<span className="w-4 text-[var(--text-low)] opacity-0 transition-opacity group-hover:opacity-100">
-							<IconChevron size={16} />
-						</span>
-					</button>
-				</li>
-			);
-		})}
-	</ul>
-);
+						</motion.li>
+					);
+				})}
+			</AnimatePresence>
+		</ul>
+	);
+};
 
 export default FileList;
