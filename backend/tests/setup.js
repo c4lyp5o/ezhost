@@ -6,6 +6,10 @@ import path from "node:path";
 // files), throwaway upload + dist dirs (never touches real data).
 process.env.PORT = "0";
 process.env.NODE_ENV = "test";
+// Seed password for the throwaway admin DB. Always set here (overriding any
+// local .env) so tests behave the same on a dev box and in CI, where there is
+// no .env at all.
+process.env.ADMIN_PASSWORD = "test-admin-password";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ezhost-test-"));
 process.env.PUBLIC_DIR = path.join(tmp, "public");
