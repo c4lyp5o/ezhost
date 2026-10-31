@@ -21,3 +21,9 @@ fs.writeFileSync(
 	path.join(process.env.DIST_DIR, "index.html"),
 	'<!DOCTYPE html><html><body><div id="root"></div></body></html>',
 );
+
+// The app-wide rate limiter keeps in-process buckets, and every test file
+// shares this process — reset per test so suites can't throttle each other.
+import { beforeEach } from "bun:test";
+import { resetRateLimitBuckets } from "../plugins/rate-limit.plugin.js";
+beforeEach(() => resetRateLimitBuckets());

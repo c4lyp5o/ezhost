@@ -61,6 +61,20 @@ describe("Files API", () => {
 		);
 	});
 
+	it("serves uploads sandboxed so they can't act as the admin", async () => {
+		const form = new FormData();
+		form.append("files", new File(["<script>fetch('/api')</script>"], "evil.html"));
+		expect((await upload(form)).status).toBe(201);
+
+		const res = await app.handle(new Request("http://localhost/static/evil.html"));
+		expect(res.status).toBe(200);
+		const csp = res.headers.get("content-security-policy") || "";
+		expect(csp).toMatch(/^sandbox\b/);
+		// allow-same-origin would undo the whole point.
+		expect(csp).not.toContain("allow-same-origin");
+		expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+	});
+
 	it("accepts HTML/CSS/JS uploads (content-type loosened by design)", async () => {
 		for (const [name, content] of [
 			["page.html", "<h1>hi</h1>"],

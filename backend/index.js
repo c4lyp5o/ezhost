@@ -12,12 +12,18 @@ import {
     RATE_LIMIT,
     UPLOADS_MAX_AGE,
 } from "./config";
-import { HttpError } from "./utils";
+import { HttpError, isInside } from "./utils";
 import { rateLimitHandler } from "./plugins/rate-limit.plugin";
 import { localOnlyGuard } from "./plugins/local-only.plugin";
 import { HealthRoute } from "./routes/health.route";
 import { FilesRoutes } from "./routes/files.route";
-import { initDB, verifyAdmin } from "./services/admin";
+import {
+    createSession,
+    deleteSession,
+    initDB,
+    SESSION_TTL_MS,
+    verifyAdmin,
+} from "./services/admin";
 import { authPlugin } from "./plugins/auth.plugin";
 
 // Content types for /static uploads — deterministic MIME instead of relying on
@@ -55,6 +61,9 @@ const MIME_BY_EXT = {
     ".wasm": "application/wasm",
 };
 
+const UPLOADS_CSP =
+    "sandbox allow-scripts allow-forms allow-popups allow-modals allow-downloads";
+
 // Initialize the database and create admin if needed.
 // Must be awaited BEFORE the server handles its first request, or the admin
 // seed can still be writing when a request verifies credentials.
@@ -71,6 +80,29 @@ let SPA_INDEX = null;
         SPA_INDEX = readFileSync(spaIndexPath, "utf8");
     }
 }
+
+// Login: shared by POST /api/v1/admin/login and the legacy POST /login.
+const loginHandler = async ({ body, set, cookie: { auth } }) => {
+    const { password } = body ?? {};
+    const isValid = typeof password === "string" && (await verifyAdmin("admin", password));
+    if (!isValid) {
+        set.status = 401;
+        return { success: false, message: "Invalid password" };
+    }
+    // Cookie-flag helper: Secure is forced ON in production so the auth
+    // cookie is never sent over plaintext HTTP, but MUST be off in dev
+    // (the vite server on :3000 talks to the backend over http://localhost).
+    const secureCookie = NODE_ENV === "production";
+    auth.set({
+        value: createSession(),
+        httpOnly: true,
+        secure: secureCookie,
+        sameSite: "lax",
+        path: "/",
+        maxAge: SESSION_TTL_MS / 1000
+    });
+    return { success: true };
+};
 
 export const app = new Elysia()
     .onError(({ code, error, set, request }) => {
@@ -103,13 +135,18 @@ export const app = new Elysia()
 
         throw error;
     })
-    .use(authPlugin)
-    .derive({ as: "global" }, ({ request, set }) => {
-        if (RATE_LIMIT > 0) {
-            rateLimitHandler(request, set);
-        }
-        logger.info(`${request.method} ${request.url}`);
+    // Rate limit first (onRequest), so throttled requests never reach cookie
+    // parsing, session lookup or a handler. Returning a value short-circuits.
+    .onRequest(rateLimitHandler(RATE_LIMIT))
+    .onRequest(({ request }) => {
+        const url = new URL(request.url);
+        // At startup Elysia pre-runs these hooks against a synthetic
+        // http://ely.sia/... request to precompute static routes (dist/ via
+        // alwaysStatic). Those aren't real traffic, so don't log them.
+        if (url.hostname === "ely.sia") return;
+        logger.info(`${request.method} ${url.pathname}${url.search}`);
     })
+    .use(authPlugin)
     .guard((api) => api.onBeforeHandle(localOnlyGuard).use(HealthRoute))
     .use(FilesRoutes)
     // Admin session — lets the SPA ask "am I logged in?" without reading the
@@ -117,30 +154,13 @@ export const app = new Elysia()
     // each admin API route via the auth plugin.
     .get("/api/v1/admin/session", ({ isAdmin }) => ({ isAdmin }))
     // Login: verify the password, set the httpOnly cookie, return JSON. The SPA
-    // (not a server redirect) decides where to navigate next.
-    .post("/login", async ({ body, set, cookie: { auth } }) => {
-        const { password } = body;
-        const isValid = await verifyAdmin("admin", password);
-        if (!isValid) {
-            set.status = 401;
-            return { success: false, message: "Invalid password" };
-        }
-        // Cookie-flag helper: Secure is forced ON in production so the auth
-        // cookie is never sent over plaintext HTTP, but MUST be off in dev
-        // (the vite server on :3000 talks to the backend over http://localhost).
-        const secureCookie = NODE_ENV === "production";
-        auth.set({
-            value: password,
-            httpOnly: true,
-            secure: secureCookie,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24
-        });
-        return { success: true };
-    })
-    // Logout: clear the auth cookie (replace with a dead value).
+    // (not a server redirect) decides where to navigate next. Lives under /api
+    // so the vite dev proxy reaches it; POST /login is kept as an alias.
+    .post("/api/v1/admin/login", loginHandler)
+    .post("/login", loginHandler)
+    // Logout: revoke the session server-side, then clear the cookie.
     .post("/api/v1/admin/logout", ({ set, cookie: { auth } }) => {
+        deleteSession(auth?.value);
         auth.set({
             value: "",
             httpOnly: true,
@@ -175,7 +195,7 @@ export const app = new Elysia()
 
         if (
             !rel ||
-            !target.startsWith(root) ||
+            !isInside(root, target) ||
             !existsSync(target) ||
             statSync(target).isDirectory()
         ) {
@@ -187,6 +207,12 @@ export const app = new Elysia()
             MIME_BY_EXT[path.extname(target).toLowerCase()] ||
             "application/octet-stream";
         set.headers["Cache-Control"] = `public, max-age=${UPLOADS_MAX_AGE}`;
+        // Uploads are public and may be HTML/JS. Sandbox them into an opaque
+        // origin (no allow-same-origin) so an uploaded page opened by a
+        // logged-in admin can't ride the session cookie against /api.
+        // Scripts/forms still run; cookies/storage of this origin don't.
+        set.headers["Content-Security-Policy"] = UPLOADS_CSP;
+        set.headers["X-Content-Type-Options"] = "nosniff";
         return Bun.file(target);
     })
     .get("/*", ({ path }) => {
@@ -210,8 +236,11 @@ export const app = new Elysia()
 // Start the HTTP server. In production the Dockerfile runs `bun index.js`
 // from backend/, so this is the real entry point — without .listen() the
 // event loop has nothing to hold open and the process exits immediately.
-app.listen({ port: PORT }, () => {
-    logger.info(`[server] 🚀 ezhost listening on ${PORT}`);
-});
+// Guarded so importing `app` (tests) has no side effects.
+if (import.meta.main) {
+    app.listen({ port: PORT }, () => {
+        logger.info(`[server] 🚀 ezhost listening on ${PORT}`);
+    });
+}
 
 export { PORT };

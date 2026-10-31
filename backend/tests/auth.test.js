@@ -85,6 +85,74 @@ describe("Auth", () => {
 		expect((await res.json()).isAdmin).toBe(true);
 	});
 
+	it("logs in through /api/v1/admin/login too (dev proxy path)", async () => {
+		const res = await app.handle(
+			new Request(`http://127.0.0.1:${port}/api/v1/admin/login`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password: adminPassword }),
+			}),
+		);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("set-cookie") || "").toMatch(/auth=/);
+	});
+
+	it("never puts the password in the cookie", async () => {
+		const res = await app.handle(
+			new Request(`http://127.0.0.1:${port}/login`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password: adminPassword }),
+			}),
+		);
+		const setCookie = res.headers.get("set-cookie") || "";
+		expect(setCookie).not.toContain(adminPassword);
+		// The password itself is no longer a valid session.
+		const asCookie = await app.handle(
+			new Request(`http://127.0.0.1:${port}/api/v1/admin/session`, {
+				headers: { cookie: `auth=${adminPassword}` },
+			}),
+		);
+		expect((await asCookie.json()).isAdmin).toBe(false);
+	});
+
+	it("does not run bcrypt for a garbage auth cookie", async () => {
+		const start = performance.now();
+		for (let i = 0; i < 10; i++) {
+			await app.handle(
+				new Request(`http://127.0.0.1:${port}/api/v1/admin/session`, {
+					headers: { cookie: `auth=garbage-${i}` },
+				}),
+			);
+		}
+		// 10 bcrypt compares would take ~800ms; a session lookup is sub-ms.
+		expect(performance.now() - start).toBeLessThan(200);
+	});
+
+	it("revokes the session server-side on logout", async () => {
+		const loginRes = await app.handle(
+			new Request(`http://127.0.0.1:${port}/login`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password: adminPassword }),
+			}),
+		);
+		const cookie = loginRes.headers.get("set-cookie").split(";")[0];
+		await app.handle(
+			new Request(`http://127.0.0.1:${port}/api/v1/admin/logout`, {
+				method: "POST",
+				headers: { cookie },
+			}),
+		);
+		// Replaying the OLD cookie (client ignored the clear) must now fail.
+		const replay = await app.handle(
+			new Request(`http://127.0.0.1:${port}/api/v1/admin/session`, {
+				headers: { cookie },
+			}),
+		);
+		expect((await replay.json()).isAdmin).toBe(false);
+	});
+
 	it("guards admin deletes without the auth cookie (401)", async () => {
 		const res = await app.handle(
 			new Request(`http://127.0.0.1:${port}/api/v1/admin/files/x.txt`, {

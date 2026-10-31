@@ -4,8 +4,11 @@ import path from "node:path";
 // Env overrides let Docker mount volumes and tests isolate into tmp dirs.
 export const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(import.meta.dir, "../public");
 export const DIST_DIR = process.env.DIST_DIR || path.join(import.meta.dir, "../dist");
+// Admin + session DB. Anchored like the dirs above so the cwd never decides
+// which database (and which seeded admin) you get. Docker sets /app/data.
+export const DB_PATH = process.env.EZHOST_DB || path.join(import.meta.dir, "ezhost.sqlite");
 
-export const PORT = Number(process.env.PORT) || 5000;
+export const PORT = process.env.PORT === undefined ? 5000 : Number(process.env.PORT);
 export const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Per-file upload cap (same 100MB ceiling the multer setup had).

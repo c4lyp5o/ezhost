@@ -1,14 +1,11 @@
-import { Elysia, t } from "elysia";
-import { verifyAdmin } from "../services/admin";
+import { Elysia } from "elysia";
+import { verifySession } from "../services/admin";
 
 export const authPlugin = new Elysia({ name: "auth" })
-  .derive({ as: "global" }, async ({ cookie: { auth }, set }) => {
-    const token = auth?.value;
-    if (!token) return { isAdmin: false };
-
-    // Simple token verification - in production you'd use JWT
-    const admin = await verifyAdmin("admin", token);
-    return { isAdmin: !!admin };
+  .derive({ as: "global" }, ({ cookie: { auth } }) => {
+    // The cookie holds an opaque session token (never the password), checked
+    // against the sessions table — no bcrypt on the request path.
+    return { isAdmin: verifySession(auth?.value) };
   })
   .guard({
     beforeHandle({ isAdmin, set }) {

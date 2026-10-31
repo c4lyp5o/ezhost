@@ -19,6 +19,13 @@ export const safeBasename = (name = "") => {
 	return base;
 };
 
+// True when `target` is `root` itself or inside it. A bare startsWith(root)
+// would also accept a sibling like /app/public-backup.
+export const isInside = (root, target) => {
+	const rel = path.relative(path.resolve(root), path.resolve(target));
+	return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+};
+
 const isPrivateIpv4 = (ip) => {
 	const [a, b] = ip.split(".").map(Number);
 

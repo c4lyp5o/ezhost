@@ -2,15 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { MAX_UPLOAD_BYTES, PUBLIC_DIR } from "../config";
 import { logger } from "../logger";
-import { HttpError, safeBasename } from "../utils";
+import { HttpError, isInside, safeBasename } from "../utils";
 
 // Uploads are PUBLIC by Calypso's explicit design: ezhost is a CDN-style
 // host, anyone may drop files here, and HTML/CSS/JS are deliberately allowed
 // so the owner can self-host pages/scripts. SVG/XML remain blocked (inline-
 // script / XXE vectors) and executables stay blocked as hardening.
-// NOTE: serving attacker-uploaded HTML/JS same-origin is a known, accepted
-// trade-off on a personal host; admin actions rely on httpOnly cookies, so a
-// page served here cannot forge admin requests.
+// NOTE: httpOnly does NOT protect admin actions from an uploaded page — it
+// stops JS reading the cookie, not the browser sending it. The real guard is
+// the CSP `sandbox` header on every /static response (see index.js): uploaded
+// pages run in an opaque origin, so their requests to /api carry no session
+// cookie and they cannot read same-origin responses.
 const DISALLOWED_EXT = new Set([
 	"svg", // inlines scripts / event handlers
 	"xml", "xsl", "dtd", // XXE / stylesheet tricks in some browsers
@@ -87,29 +89,42 @@ export const FilesService = {
 			throw new HttpError(400, `Invalid file name: "${name}"`);
 		}
 		const target = path.resolve(PUBLIC_DIR, base);
-		if (!target.startsWith(path.resolve(PUBLIC_DIR))) {
+		if (!isInside(PUBLIC_DIR, target) || target === path.resolve(PUBLIC_DIR)) {
 			throw new HttpError(400, "Invalid file path");
 		}
-		if (!fs.existsSync(target) || fs.statSync(target).isDirectory()) {
+		if (!fs.existsSync(target)) {
 			throw new HttpError(404, `File "${base}" not found`);
+		}
+		// Folders: only empty ones, so a click can never wipe a whole tree.
+		if (fs.statSync(target).isDirectory()) {
+			if (fs.readdirSync(target).length > 0) {
+				throw new HttpError(409, `Folder "${base}" isn't empty`);
+			}
+			fs.rmdirSync(target);
+			logger.info(`[files] 🗑️ deleted dir ${base}`);
+			return { success: true, message: `Deleted "${base}"` };
 		}
 		fs.unlinkSync(target);
 		logger.info(`[files] 🗑️ deleted ${base}`);
 		return { success: true, message: `Deleted "${base}"` };
 	},
 
-	// Create a directory inside public/. Accepts a "/"-joined path; each segment
-	// is sanitized with safeBasename so "../" cannot escape PUBLIC_DIR.
+	// Create a directory inside public/. One level only: the listing and the
+	// UI are flat, so a nested folder would be invisible. Leading/trailing
+	// slashes are tolerated ("/docs/" -> "docs"); "a/b" is rejected.
 	createDir: (dirPath = "") => {
 		const segments = String(dirPath)
 			.split(/[/\\]+/)
 			.map(safeBasename)
 			.filter(Boolean);
 		if (segments.length === 0) {
-			throw new HttpError(400, `Invalid folder path: "${dirPath}"`);
+			throw new HttpError(400, `Invalid folder name: "${dirPath}"`);
+		}
+		if (segments.length > 1) {
+			throw new HttpError(400, "Folders can't be nested — use a single name");
 		}
 		const target = path.resolve(PUBLIC_DIR, ...segments);
-		if (!target.startsWith(path.resolve(PUBLIC_DIR))) {
+		if (!isInside(PUBLIC_DIR, target) || target === path.resolve(PUBLIC_DIR)) {
 			throw new HttpError(400, "Invalid folder path");
 		}
 		fs.mkdirSync(target, { recursive: true });
