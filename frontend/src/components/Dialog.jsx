@@ -60,7 +60,7 @@ const DialogPanel = ({ onClose, labelledBy, dismissible, children, wide }) => {
 			transition={{ duration: reduce ? 0 : 0.18 }}
 		>
 			<div
-				className="absolute inset-0 bg-[#050a14]/65 backdrop-blur-[3px]"
+				className="absolute inset-0 bg-overlay"
 				onClick={() => dismissible && onClose()}
 				aria-hidden="true"
 			/>
@@ -70,7 +70,7 @@ const DialogPanel = ({ onClose, labelledBy, dismissible, children, wide }) => {
 				aria-modal="true"
 				aria-labelledby={labelledBy}
 				tabIndex={-1}
-				className={`surface relative max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl p-6 shadow-[0_30px_80px_-20px_rgba(5,10,20,0.6)] outline-none sm:rounded-2xl ${
+				className={`surface relative max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl p-6 shadow-[0_12px_28px_rgba(0,0,0,.2)] outline-none sm:rounded-2xl ${
 					wide ? "sm:max-w-lg" : "sm:max-w-md"
 				}`}
 				initial={reduce ? false : { y: 40, opacity: 0.6, scale: 0.98 }}

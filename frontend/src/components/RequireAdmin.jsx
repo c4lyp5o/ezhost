@@ -17,7 +17,7 @@ const RequireAdmin = ({ children }) => {
 
 	if (authed === null) {
 		return (
-			<div className="flex min-h-dvh items-center justify-center bg-[var(--surface-0)] text-sm text-[var(--text-low)]">
+			<div className="flex min-h-dvh items-center justify-center bg-[var(--surface-0)] text-[13px] text-[var(--text-low)]">
 				Checking your session…
 			</div>
 		);

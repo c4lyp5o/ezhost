@@ -5,9 +5,10 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
+// ez palette: a neutral box in the raised tone, ink edges, the accent tape.
 const PALETTE = {
-	dark: { box: 0x22365c, edge: 0xffc93c, tape: 0xffc93c, label: 0xe6ecf5 },
-	light: { box: 0x2a4170, edge: 0x0f1a2e, tape: 0xffc93c, label: 0xffffff },
+	dark: { box: 0x2a292e, edge: 0xbdbdc0, tape: 0xffc93c, label: 0xf2f2f3 },
+	light: { box: 0xe4e4e7, edge: 0x3f4146, tape: 0xd9a300, label: 0xffffff },
 };
 
 const Parcel3D = ({ excited = false, theme = "dark", reduceMotion = false, onReady }) => {
@@ -42,7 +43,7 @@ const Parcel3D = ({ excited = false, theme = "dark", reduceMotion = false, onRea
 		const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
 		camera.position.set(0, 0.4, 7.2);
 
-		scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x0f1a2e, 1.4));
+		scene.add(new THREE.HemisphereLight(0xf2f2f3, 0x171719, 1.4));
 		const key = new THREE.DirectionalLight(0xffffff, 2.2);
 		key.position.set(3, 4, 5);
 		scene.add(key);
@@ -75,7 +76,7 @@ const Parcel3D = ({ excited = false, theme = "dark", reduceMotion = false, onRea
 		const label = new THREE.Mesh(track(new THREE.PlaneGeometry(0.62, 0.42)), labelMat);
 		label.position.set(-0.6, -0.26, D / 2 + lift);
 		parcel.add(label);
-		const barMat = track(new THREE.MeshBasicMaterial({ color: 0x0f1a2e }));
+		const barMat = track(new THREE.MeshBasicMaterial({ color: 0x171719 }));
 		for (let i = 0; i < 5; i++) {
 			const bar = new THREE.Mesh(track(new THREE.PlaneGeometry(0.42 - i * 0.05, 0.035)), barMat);
 			bar.position.set(-0.6 - i * 0.025, -0.14 - i * 0.06, D / 2 + lift * 2);

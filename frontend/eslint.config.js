@@ -15,7 +15,7 @@ export default defineConfig([
     ],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __APP_REPO__: 'readonly' },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -26,4 +26,10 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^([A-Z_]|motion$)' }],
     },
   },
+	// The ez kit exports helpers next to components; fast refresh does a full
+	// reload for those files instead.
+	{
+		files: ["src/ez/**/*.{js,jsx}"],
+		rules: { "react-refresh/only-export-components": "off" },
+	},
 ])

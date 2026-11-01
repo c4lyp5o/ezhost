@@ -1,63 +1,49 @@
 @import "tailwindcss";
+@import "./ez/ez.css";
+@source not "../../dist";
 
 /* Class-based dark mode — html.dark drives every dark: variant. Dark is the
    default, applied by the bootstrap script in index.html before first paint. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   ezhost tokens — "shipping dock"
-   Files are parcels, links are their labels. Harbor navy surfaces, one
-   label-yellow accent used as a FILL (navy text on it), never as body text.
+   ezhost on the ez house style (ezllm/ezdyndns). The ezhost token names
+   are kept — every component reads them — but they now resolve to the ez
+   palette: a dark data terminal, colour on data and status only, and one
+   accent (ezhost's label amber) on the selection line and fresh rows.
    ============================================================ */
 
 :root {
-	color-scheme: light;
+	--ez-accent-light: #8a5d00;
+	--ez-accent-dark: #ffc93c;
 
-	--surface-0: #eef2f7; /* paper            */
-	--surface-1: #ffffff; /* panel            */
-	--surface-2: #e3e9f2; /* inset / hover    */
-	--stroke: #d3dbe7;
-	--stroke-strong: #b9c4d6;
-	--text-hi: #0f1a2e;
-	--text-mid: #56637f;
-	--text-low: #7f8aa3;
+	--surface-0: var(--color-bg);
+	--surface-1: var(--color-surface);
+	--surface-2: var(--color-raised);
+	--stroke: var(--color-line);
+	--stroke-strong: var(--color-line-strong);
+	--text-hi: var(--color-ink);
+	--text-mid: var(--color-dim);
+	--text-low: var(--color-mute);
 
-	--label: #ffc93c; /* label yellow (fill) */
-	--label-ink: #0f1a2e; /* text on label       */
-	--label-text: #8a5d00; /* yellow-family text on light bg */
-	--label-soft: rgba(255, 201, 60, 0.22);
-	--ring: rgba(15, 26, 46, 0.55);
+	--label: var(--color-accent);
+	--label-ink: var(--color-accent-ink);
+	--label-text: var(--color-accent);
+	--label-soft: var(--color-accent-dim);
+	--ring: var(--color-accent);
 
-	--good: #12804f;
-	--bad: #c4362a;
-	--bad-soft: rgba(196, 54, 42, 0.08);
-	--bad-ink: #ffffff; /* text on a --bad fill */
+	--good: var(--color-ok);
+	--bad: var(--color-bad);
+	--bad-soft: var(--color-bad-dim);
+	--bad-ink: #ffffff;
 
-	--font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
-	--font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-	--font-url: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+	--font-display: var(--font-sans);
+	--font-ui: var(--font-sans);
+	--font-url: var(--font-code);
 }
 
-.dark {
-	color-scheme: dark;
-
-	--surface-0: #0f1a2e; /* harbor ink */
-	--surface-1: #16233d; /* hull       */
-	--surface-2: #1d2c4b;
-	--stroke: #2a3a5c; /* rope       */
-	--stroke-strong: #3a4d74;
-	--text-hi: #e6ecf5; /* fog        */
-	--text-mid: #a9b5cf;
-	--text-low: #8c9ab8; /* tide       */
-
-	--label-text: #ffc93c;
-	--label-soft: rgba(255, 201, 60, 0.14);
-	--ring: rgba(255, 201, 60, 0.75);
-
-	--good: #3dd68c;
-	--bad: #ff7a6e;
-	--bad-soft: rgba(255, 122, 110, 0.1);
-	--bad-ink: #0f1a2e;
+@theme {
+	--radius-3xl: 12px;
 }
 
 html {
@@ -66,8 +52,8 @@ html {
 
 body {
 	font-family: var(--font-ui);
-	font-size: 15px;
-	line-height: 1.5;
+	font-size: 13px;
+	line-height: 1.55;
 	-webkit-font-smoothing: antialiased;
 	background: var(--surface-0);
 	color: var(--text-hi);
@@ -80,8 +66,7 @@ body {
 }
 
 ::selection {
-	background: var(--label);
-	color: var(--label-ink);
+	background: var(--color-accent-dim);
 }
 
 * {
@@ -95,13 +80,12 @@ body {
 .display {
 	text-wrap: balance;
 	font-family: var(--font-display);
-	font-optical-sizing: auto;
-	letter-spacing: -0.025em;
-	line-height: 1.02;
+	letter-spacing: -0.01em;
+	line-height: 1.15;
 }
 .url {
 	font-family: var(--font-url);
-	font-size: 12.5px;
+	font-size: 12px;
 }
 .num {
 	font-variant-numeric: tabular-nums;
@@ -115,42 +99,40 @@ body {
 	border: 1px solid var(--stroke);
 }
 
+/* One filled primary per screen: the INK inverted, never the accent.
+   Buttons are pills; unlayered, so they beat any rounded-* utility. */
 .btn-label {
-	background: var(--label);
-	color: var(--label-ink);
-	font-weight: 600;
-	border: 1px solid transparent;
-	box-shadow: inset 0 -2px 0 rgba(15, 26, 46, 0.18);
-	transition: filter 0.15s ease, transform 0.06s ease;
+	background: var(--color-ink);
+	color: var(--color-bg);
+	font-weight: 500;
+	border: 1px solid var(--color-ink);
+	border-radius: 999px;
 }
 .btn-label:hover {
-	filter: brightness(1.06);
+	background: var(--color-dim);
+	border-color: var(--color-dim);
 }
 .btn-label:active {
-	transform: translateY(1px);
+	translate: 0 1px;
 }
 .btn-label:disabled {
-	background: var(--surface-2);
-	color: var(--text-low);
-	box-shadow: none;
-	filter: none;
+	opacity: 0.6;
 	cursor: not-allowed;
-	transform: none;
+	translate: none;
 }
 
 .btn-ghost {
 	background: transparent;
 	color: var(--text-hi);
-	border: 1px solid var(--stroke);
-	transition: background-color 0.15s ease, border-color 0.15s ease;
+	border: 1px solid var(--stroke-strong);
+	border-radius: 999px;
 }
 .btn-ghost:hover {
-	background: var(--surface-2);
-	border-color: var(--stroke-strong);
+	background: var(--color-hover);
 }
 
 .field {
-	background: var(--surface-1);
+	background: var(--color-raised);
 	border: 1px solid var(--stroke);
 	color: var(--text-hi);
 	transition: border-color 0.15s ease;
@@ -163,29 +145,19 @@ body {
 }
 .field:focus {
 	outline: none;
-	border-color: var(--text-hi);
+	border-color: var(--color-accent);
 }
 
 /* ---------------------------------------------------------------
    The dock — the one loud element. Hazard-tape edge on the left,
    a dashed drop area, and the three.js parcel.
 ---------------------------------------------------------------- */
+/* The dock's edge: a solid accent line (no gradients in the house style). */
 .hazard {
-	background: repeating-linear-gradient(
-		-45deg,
-		var(--label) 0 10px,
-		var(--label-ink) 10px 20px
-	);
-}
-.dark .hazard {
-	background: repeating-linear-gradient(
-		-45deg,
-		var(--label) 0 10px,
-		#0a1222 10px 20px
-	);
+	background: var(--color-accent);
 }
 .dock-drop {
-	border: 2px dashed var(--stroke-strong);
+	border: 1px dashed var(--stroke-strong);
 	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .dock-drop[data-over="true"] {
@@ -219,25 +191,26 @@ body {
 }
 
 /* ---------------------------------------------------------------
-   React-Toastify — restyled as dock labels.
+   React-Toastify — restyled as ez notices.
 ---------------------------------------------------------------- */
 .Toastify__toast {
-	background: var(--surface-1) !important;
-	border: 1px solid var(--stroke) !important;
-	border-left: 4px solid var(--label) !important;
-	border-radius: 8px !important;
-	color: var(--text-hi) !important;
-	font-family: var(--font-ui) !important;
-	font-size: 14px !important;
-	box-shadow: 0 16px 40px -16px rgba(5, 10, 20, 0.55) !important;
+	background: var(--color-surface) !important;
+	border: 1px solid var(--color-line) !important;
+	border-left: 2px solid var(--color-ok) !important;
+	border-radius: 6px !important;
+	color: var(--color-ink) !important;
+	font-family: var(--font-sans) !important;
+	font-size: 13px !important;
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2) !important;
 }
 .Toastify__toast--error {
-	border-left-color: var(--bad) !important;
+	border-left-color: var(--color-bad) !important;
 }
 .Toastify__close-button {
-	color: var(--text-low) !important;
+	color: var(--color-mute) !important;
 	opacity: 1 !important;
 }
 .Toastify__progress-bar {
-	background: var(--label) !important;
+	background: var(--color-line-strong) !important;
+	height: 2px !important;
 }

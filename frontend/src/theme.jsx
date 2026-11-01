@@ -14,9 +14,11 @@ export const ThemeProvider = ({ children }) => {
 
 	useEffect(() => {
 		document.documentElement.classList.toggle("dark", theme === "dark");
+		document.documentElement.classList.toggle("light", theme === "light");
+		window.dispatchEvent(new Event("ez-theme"));
 		document
 			.querySelector('meta[name="theme-color"]')
-			?.setAttribute("content", theme === "dark" ? "#0F1A2E" : "#EEF2F7");
+			?.setAttribute("content", theme === "dark" ? "#171719" : "#f9fafb");
 		try {
 			localStorage.setItem(STORAGE_KEY, theme);
 		} catch {

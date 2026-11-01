@@ -12,7 +12,7 @@ const extOf = (name) => (name.includes(".") ? name.split(".").pop().toLowerCase(
 const Meta = ({ label, children }) => (
 	<div>
 		<dt className="text-[12.5px] text-[var(--text-low)]">{label}</dt>
-		<dd className="num mt-0.5 text-sm text-[var(--text-hi)]">{children}</dd>
+		<dd className="num mt-0.5 text-[13px] text-[var(--text-hi)]">{children}</dd>
 	</div>
 );
 
@@ -41,11 +41,11 @@ const FileInfoModal = ({ file, open, onClose }) => {
 	return (
 		<Dialog open={open} onClose={onClose} labelledBy="file-title" wide>
 			<div className="mb-5 flex items-start gap-3">
-				<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--label)] text-[var(--label-ink)]">
+				<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-dim text-accent">
 					<FileIcon size={21} />
 				</span>
 				<div className="min-w-0 flex-1">
-					<h2 id="file-title" className="display truncate text-xl font-bold">
+					<h2 id="file-title" className="truncate text-[15px] font-semibold">
 						{file.name}
 					</h2>
 					<p className="text-[13px] text-[var(--text-mid)]">
@@ -63,7 +63,7 @@ const FileInfoModal = ({ file, open, onClose }) => {
 			</div>
 
 			{file.isDirectory ? (
-				<p className="mb-5 text-sm text-[var(--text-mid)]">
+				<p className="mb-5 text-[13px] text-[var(--text-mid)]">
 					Folders are created by the admin to keep things organised. Uploads go
 					to the main list.
 				</p>
@@ -83,7 +83,7 @@ const FileInfoModal = ({ file, open, onClose }) => {
 							type="button"
 							onClick={() => copy(url)}
 							className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition ${
-								copied ? "bg-[var(--label)] text-[var(--label-ink)]" : "btn-ghost"
+								copied ? "bg-accent-dim text-accent" : "btn-ghost"
 							}`}
 						>
 							{copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
@@ -99,7 +99,7 @@ const FileInfoModal = ({ file, open, onClose }) => {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="btn-label inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px]"
+						className="btn-label inline-flex flex-1 items-center justify-center gap-2 h-[34px] px-4 text-[13px]"
 					>
 						<IconExternal size={16} />
 						Open file
@@ -108,7 +108,7 @@ const FileInfoModal = ({ file, open, onClose }) => {
 				<button
 					type="button"
 					onClick={onClose}
-					className={`btn-ghost rounded-xl px-4 py-3 text-[15px] font-medium ${
+					className={`btn-ghost h-[34px] px-4 text-[13px] font-medium ${
 						file.isDirectory ? "flex-1" : ""
 					}`}
 				>

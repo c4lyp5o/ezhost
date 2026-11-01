@@ -3,29 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { AnimatePresence, motion } from "motion/react";
+import { Stagger, StaggerItem } from "./ez/motion";
 import { fetcher, swrOptions } from "./api.js";
 import Header from "./components/Header.jsx";
 import Dock from "./components/Dock.jsx";
 import FileList from "./components/FileList.jsx";
 import UploadModal from "./components/UploadModal.jsx";
 import FileInfoModal from "./components/FileInfoModal.jsx";
-import { IconGithub, IconInbox, IconSearch } from "./components/Icons.jsx";
+import { IconGithub } from "./components/Icons.jsx";
 import { formatBytes } from "./utils.js";
 
 const hasFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes("Files");
 
-const Notice = ({ icon: Icon, title, children, tone }) => (
+const Notice = ({ title, children, tone }) => (
 	<div
-		className={`flex flex-col items-center gap-2 rounded-2xl border border-dashed px-6 py-14 text-center ${
+		className={`flex flex-col items-start gap-1 rounded border border-dashed px-4 py-3 ${
 			tone === "bad"
 				? "border-[var(--bad)]/50 bg-[var(--bad-soft)]"
 				: "border-[var(--stroke-strong)]"
 		}`}
 		role={tone === "bad" ? "alert" : undefined}
 	>
-		{Icon && <Icon size={26} className="mb-1 text-[var(--text-low)]" />}
-		<p className="display text-xl font-bold text-[var(--text-hi)]">{title}</p>
-		<div className="max-w-sm text-sm text-[var(--text-mid)]">{children}</div>
+		
+		<p className="text-[13px] text-[var(--text-mid)]">{title}</p>
+		<div className="max-w-prose text-[12px] text-[var(--text-low)]">{children}</div>
 	</div>
 );
 
@@ -99,16 +100,20 @@ const App = () => {
 			<Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
 			<main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-12 sm:px-6 sm:pt-8">
+				<Stagger>
+				<StaggerItem>
 				<Dock
 					excited={pageDrag || upload.open}
 					dragOver={pageDrag}
 					onChoose={() => openUpload()}
 				/>
+				</StaggerItem>
 
-				<div className="mt-10 mb-3 flex items-end justify-between gap-4">
-					<h2 className="display text-2xl font-bold">Hosted files</h2>
+				<StaggerItem>
+				<div className="mt-8 mb-3 flex items-end justify-between gap-4">
+					<h2 className="text-[15px] font-semibold">Hosted files</h2>
 					{data && (
-						<p className="num text-sm text-[var(--text-low)]">
+						<p className="num text-[13px] text-[var(--text-low)]">
 							{q
 								? `${files.length} of ${all.length} match`
 								: `${fileCount} file${fileCount === 1 ? "" : "s"}, ${formatBytes(totalBytes)}`}
@@ -117,11 +122,11 @@ const App = () => {
 				</div>
 
 				{isLoading && (
-					<div className="surface space-y-px overflow-hidden rounded-2xl" aria-busy="true" aria-label="Loading files">
+					<div className="surface space-y-px overflow-hidden rounded-lg" aria-busy="true" aria-label="Loading files">
 						{[0, 1, 2].map((i) => (
 							<div key={i} className="flex items-center gap-3.5 px-5 py-3.5">
-								<span className="h-9 w-9 animate-pulse rounded-lg bg-[var(--surface-2)]" />
-								<span className="h-3.5 w-48 animate-pulse rounded bg-[var(--surface-2)]" />
+								<span className="h-9 w-9 rounded-lg bg-[var(--color-shade)]" />
+								<span className="h-3.5 w-48 rounded bg-[var(--color-shade)]" />
 							</div>
 						))}
 					</div>
@@ -133,7 +138,7 @@ const App = () => {
 						<button
 							type="button"
 							onClick={() => mutate()}
-							className="btn-ghost mt-4 rounded-xl px-4 py-2 text-sm font-medium"
+							className="btn-ghost mt-4 inline-flex h-[34px] items-center px-4 text-[13px] font-medium"
 						>
 							Try again
 						</button>
@@ -142,11 +147,11 @@ const App = () => {
 
 				{data && files.length === 0 &&
 					(q ? (
-						<Notice icon={IconSearch} title={`Nothing named “${searchTerm.trim()}”`}>
+						<Notice title={`Nothing named “${searchTerm.trim()}”`}>
 							Check the spelling or clear the search to see every file.
 						</Notice>
 					) : (
-						<Notice icon={IconInbox} title="Nothing hosted yet">
+						<Notice title="Nothing hosted yet">
 							Upload the first file and its link will show up here.
 						</Notice>
 					))}
@@ -154,17 +159,19 @@ const App = () => {
 				{data && files.length > 0 && (
 					<FileList files={files} fresh={fresh} onSelect={select} />
 				)}
+				</StaggerItem>
+				</Stagger>
 			</main>
 
 			<footer className="flex items-center justify-center gap-2 border-t border-[var(--stroke)] py-5 text-[13px] text-[var(--text-low)]">
-				<span>ezhost</span>
+				<span className="num">v{__APP_VERSION__}</span>
 				<span aria-hidden="true">·</span>
 				<a
-					href="https://github.com/c4lyp5o"
+					href={__APP_REPO__}
 					target="_blank"
 					rel="noopener noreferrer"
-					aria-label="c4lyp5o on GitHub"
-					title="c4lyp5o on GitHub"
+					aria-label="Source on GitHub"
+					title="Source on GitHub"
 					className="rounded p-1 transition-colors hover:text-[var(--text-hi)]"
 				>
 					<IconGithub size={16} />
@@ -175,13 +182,13 @@ const App = () => {
 			<AnimatePresence>
 				{pageDrag && !upload.open && (
 					<motion.div
-						className="pointer-events-none fixed inset-3 z-[60] flex items-center justify-center rounded-3xl border-4 border-dashed border-[var(--label)] bg-[var(--surface-0)]/70 backdrop-blur-sm"
+						className="pointer-events-none fixed inset-3 z-[60] flex items-center justify-center rounded-xl border border-dashed border-accent bg-[var(--surface-0)]/90"
 						initial={{ opacity: 0, scale: 1.02 }}
 						animate={{ opacity: 1, scale: 1 }}
 						exit={{ opacity: 0, scale: 1.02 }}
 						transition={{ duration: 0.16 }}
 					>
-						<p className="display px-6 text-center font-extrabold" style={{ fontSize: "clamp(2rem, 7vw, 4.5rem)" }}>
+						<p className="px-6 text-center text-[30px] font-semibold">
 							Drop to upload
 						</p>
 					</motion.div>
