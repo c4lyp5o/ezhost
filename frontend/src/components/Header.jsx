@@ -9,7 +9,7 @@ const Header = ({ searchTerm, setSearchTerm }) => {
 	const dark = theme === "dark";
 
 	return (
-		<header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--surface-0)]/85 backdrop-blur-md">
+		<header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--surface-0)]">
 			<div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
 				<Link to="/" className="shrink-0 rounded-lg" aria-label="ezhost home">
 					<Wordmark size={30} />
@@ -25,7 +25,7 @@ const Header = ({ searchTerm, setSearchTerm }) => {
 							placeholder="Search files"
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							className="field w-full rounded-xl py-2 pr-3 pl-9 text-sm"
+							className="field w-full rounded-xl py-2 pr-3 pl-9 text-[13px]"
 						/>
 					</label>
 					<button
@@ -33,7 +33,7 @@ const Header = ({ searchTerm, setSearchTerm }) => {
 						onClick={toggle}
 						aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
 						title={dark ? "Light theme" : "Dark theme"}
-						className="btn-ghost flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-mid)]"
+						className="btn-ghost flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl text-[var(--text-mid)]"
 					>
 						{dark ? <IconSun size={16} /> : <IconMoon size={16} />}
 					</button>

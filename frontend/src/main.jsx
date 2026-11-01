@@ -5,13 +5,17 @@ import "react-toastify/dist/ReactToastify.css";
 import router from "./router.jsx";
 import { ThemeProvider } from "./theme.jsx";
 import ThemedToast from "./components/ThemedToast.jsx";
+import "@fontsource-variable/public-sans";
 import "./index.css";
+import { MotionRoot } from "./ez/motion";
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<ThemeProvider>
-			<RouterProvider router={router} />
-			<ThemedToast />
+			<MotionRoot>
+				<RouterProvider router={router} />
+				<ThemedToast />
+			</MotionRoot>
 		</ThemeProvider>
 	</StrictMode>,
 );
