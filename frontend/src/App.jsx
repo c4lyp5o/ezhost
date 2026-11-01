@@ -164,14 +164,14 @@ const App = () => {
 			</main>
 
 			<footer className="flex items-center justify-center gap-2 border-t border-[var(--stroke)] py-5 text-[13px] text-[var(--text-low)]">
-				<span>ezhost</span>
+				<span className="num">v{__APP_VERSION__}</span>
 				<span aria-hidden="true">·</span>
 				<a
-					href="https://github.com/c4lyp5o"
+					href={__APP_REPO__}
 					target="_blank"
 					rel="noopener noreferrer"
-					aria-label="c4lyp5o on GitHub"
-					title="c4lyp5o on GitHub"
+					aria-label="Source on GitHub"
+					title="Source on GitHub"
 					className="rounded p-1 transition-colors hover:text-[var(--text-hi)]"
 				>
 					<IconGithub size={16} />

@@ -1,18 +1,15 @@
-// Top bar: wordmark, search, theme toggle. Sticky, blurred, hairline below.
+// Top bar, ezchrono style: mark, name, description, search, theme switch.
 import { Link } from "react-router-dom";
-import { useTheme } from "../theme-context.js";
-import { IconSearch, IconSun, IconMoon } from "./Icons.jsx";
+import { IconSearch } from "./Icons.jsx";
+import ThemeButton from "./ThemeButton.jsx";
 import Wordmark from "./Wordmark.jsx";
 
 const Header = ({ searchTerm, setSearchTerm }) => {
-	const { theme, toggle } = useTheme();
-	const dark = theme === "dark";
-
 	return (
 		<header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--surface-0)]">
 			<div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
 				<Link to="/" className="shrink-0 rounded-lg" aria-label="ezhost home">
-					<Wordmark size={30} />
+					<Wordmark size={28} suffix="Self-hosted file hosting" collapse />
 				</Link>
 				<div className="ml-auto flex min-w-0 items-center gap-2">
 					<label className="relative block w-full min-w-0 sm:w-72">
@@ -28,15 +25,7 @@ const Header = ({ searchTerm, setSearchTerm }) => {
 							className="field w-full rounded-xl py-2 pr-3 pl-9 text-[13px]"
 						/>
 					</label>
-					<button
-						type="button"
-						onClick={toggle}
-						aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-						title={dark ? "Light theme" : "Dark theme"}
-						className="btn-ghost flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl text-[var(--text-mid)]"
-					>
-						{dark ? <IconSun size={16} /> : <IconMoon size={16} />}
-					</button>
+					<ThemeButton />
 				</div>
 			</div>
 		</header>

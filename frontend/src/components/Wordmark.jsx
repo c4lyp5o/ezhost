@@ -1,6 +1,6 @@
 // The ezhost mark in the ez family style: a small rounded tile with the
 // parcel drawn in the accent, then the name. `size` scales both together.
-const Wordmark = ({ size = 28, suffix }) => (
+const Wordmark = ({ size = 28, suffix, collapse }) => (
 	<span className="inline-flex items-center gap-2.5">
 		<svg width={size * 0.8} height={size * 0.8} viewBox="0 0 32 32" aria-hidden="true">
 			<rect x="0.5" y="0.5" width="31" height="31" rx="7" fill="var(--color-surface)" stroke="var(--color-line-strong)" />
@@ -14,7 +14,7 @@ const Wordmark = ({ size = 28, suffix }) => (
 		</svg>
 		<span className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--text-hi)]">
 			ezhost
-			{suffix && <span className="ml-3 border-l border-[var(--stroke-strong)] pl-3 text-[12px] font-normal text-[var(--text-low)]">{suffix}</span>}
+			{suffix && <span className={`${collapse ? "max-sm:hidden " : ""}ml-3 border-l border-[var(--stroke-strong)] pl-3 text-[12px] font-normal text-[var(--text-low)]`}>{suffix}</span>}
 		</span>
 	</span>
 );

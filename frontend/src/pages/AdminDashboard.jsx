@@ -9,6 +9,7 @@ import { fetcher, request, swrOptions } from "../api.js";
 import { logout } from "../auth.js";
 import { formatBytes, formatDate, formatRelative, getFileIcon } from "../utils.js";
 import Dialog from "../components/Dialog.jsx";
+import ThemeButton from "../components/ThemeButton.jsx";
 import Wordmark from "../components/Wordmark.jsx";
 import {
 	IconFolder,
@@ -16,10 +17,7 @@ import {
 	IconExternal,
 	IconLogout,
 	IconFolderPlus,
-	IconSun,
-	IconMoon,
 } from "../components/Icons.jsx";
-import { useTheme } from "../theme-context.js";
 
 const ConfirmDelete = ({ open, target, onCancel, onConfirm, busy }) => (
 	<Dialog open={open} onClose={onCancel} labelledBy="confirm-title" dismissible={!busy}>
@@ -62,7 +60,6 @@ const ConfirmDelete = ({ open, target, onCancel, onConfirm, busy }) => (
 const AdminDashboard = () => {
 	const navigate = useNavigate();
 	const reduce = useReducedMotion();
-	const { theme, toggle } = useTheme();
 	const [folderName, setFolderName] = useState("");
 	const [folderError, setFolderError] = useState("");
 	const [target, setTarget] = useState(null);
@@ -136,16 +133,7 @@ const AdminDashboard = () => {
 		navigate("/login", { replace: true });
 	};
 
-	const themeButton = (
-		<button
-			type="button"
-			onClick={toggle}
-			aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-			className="btn-ghost flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl text-[var(--text-mid)]"
-		>
-			{theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
-		</button>
-	);
+	const themeButton = <ThemeButton />;
 
 	return (
 		<div className="flex min-h-dvh flex-col bg-[var(--surface-0)] text-[var(--text-hi)] md:flex-row">
