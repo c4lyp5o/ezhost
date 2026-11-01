@@ -56,7 +56,7 @@ const UploadModal = ({ open, initialFiles, onClose, onUploaded }) => {
 	return (
 		<Dialog open={open} onClose={onClose} labelledBy="upload-title" dismissible={!busy}>
 			<div className="mb-5 flex items-center justify-between">
-				<h2 id="upload-title" className="display text-2xl font-bold">
+				<h2 id="upload-title" className="text-[24px] font-semibold tracking-[-0.01em]">
 					Upload files
 				</h2>
 				<button
@@ -96,7 +96,7 @@ const UploadModal = ({ open, initialFiles, onClose, onUploaded }) => {
 					className="sr-only"
 					data-autofocus
 				/>
-				<span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--label)] text-[var(--label-ink)]">
+				<span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-accent-dim text-accent">
 					<IconCloud size={22} />
 				</span>
 				<p className="mt-3 text-[15px] font-medium text-[var(--text-hi)]">
@@ -124,7 +124,7 @@ const UploadModal = ({ open, initialFiles, onClose, onUploaded }) => {
 									}`}
 								>
 									<span className="min-w-0 flex-1">
-										<span className="block truncate text-sm text-[var(--text-hi)]">{f.name}</span>
+										<span className="block truncate text-[13px] text-[var(--text-hi)]">{f.name}</span>
 										{problem && (
 											<span className="block text-[12.5px] text-[var(--bad)]">{problem}</span>
 										)}
@@ -184,7 +184,7 @@ const UploadModal = ({ open, initialFiles, onClose, onUploaded }) => {
 					type="button"
 					onClick={upload}
 					disabled={!files.length || blocked > 0 || busy}
-					className="btn-label inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px]"
+					className="btn-label inline-flex flex-1 items-center justify-center gap-2 h-[34px] px-4 text-[13px]"
 				>
 					{phase === "done" ? (
 						<IconCheck size={16} />
@@ -205,7 +205,7 @@ const UploadModal = ({ open, initialFiles, onClose, onUploaded }) => {
 					type="button"
 					onClick={onClose}
 					disabled={busy}
-					className="btn-ghost rounded-xl px-4 py-3 text-[15px] font-medium disabled:opacity-40"
+					className="btn-ghost h-[34px] px-4 text-[13px] font-medium disabled:opacity-40"
 				>
 					Cancel
 				</button>

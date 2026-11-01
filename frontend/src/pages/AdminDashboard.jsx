@@ -9,6 +9,7 @@ import { fetcher, request, swrOptions } from "../api.js";
 import { logout } from "../auth.js";
 import { formatBytes, formatDate, formatRelative, getFileIcon } from "../utils.js";
 import Dialog from "../components/Dialog.jsx";
+import ThemeButton from "../components/ThemeButton.jsx";
 import Wordmark from "../components/Wordmark.jsx";
 import {
 	IconFolder,
@@ -16,16 +17,13 @@ import {
 	IconExternal,
 	IconLogout,
 	IconFolderPlus,
-	IconSun,
-	IconMoon,
 } from "../components/Icons.jsx";
-import { useTheme } from "../theme-context.js";
 
 const ConfirmDelete = ({ open, target, onCancel, onConfirm, busy }) => (
 	<Dialog open={open} onClose={onCancel} labelledBy="confirm-title" dismissible={!busy}>
 		{target && (
 			<>
-				<h2 id="confirm-title" className="display text-2xl font-bold">
+				<h2 id="confirm-title" className="text-[24px] font-semibold tracking-[-0.01em]">
 					Delete {target.isDirectory ? "folder" : "file"}?
 				</h2>
 				<p className="mt-2 text-[15px] text-[var(--text-mid)]">
@@ -49,7 +47,7 @@ const ConfirmDelete = ({ open, target, onCancel, onConfirm, busy }) => (
 						type="button"
 						onClick={onCancel}
 						disabled={busy}
-						className="btn-ghost rounded-xl px-4 py-3 text-[15px] font-medium"
+						className="btn-ghost h-[34px] px-4 text-[13px] font-medium"
 					>
 						Keep it
 					</button>
@@ -62,7 +60,6 @@ const ConfirmDelete = ({ open, target, onCancel, onConfirm, busy }) => (
 const AdminDashboard = () => {
 	const navigate = useNavigate();
 	const reduce = useReducedMotion();
-	const { theme, toggle } = useTheme();
 	const [folderName, setFolderName] = useState("");
 	const [folderError, setFolderError] = useState("");
 	const [target, setTarget] = useState(null);
@@ -136,16 +133,7 @@ const AdminDashboard = () => {
 		navigate("/login", { replace: true });
 	};
 
-	const themeButton = (
-		<button
-			type="button"
-			onClick={toggle}
-			aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-			className="btn-ghost flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-mid)]"
-		>
-			{theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
-		</button>
-	);
+	const themeButton = <ThemeButton />;
 
 	return (
 		<div className="flex min-h-dvh flex-col bg-[var(--surface-0)] text-[var(--text-hi)] md:flex-row">
@@ -154,10 +142,10 @@ const AdminDashboard = () => {
 				<Wordmark size={26} suffix="admin" />
 				<div className="ml-auto flex items-center gap-2">
 					{themeButton}
-					<Link to="/" aria-label="Public page" className="btn-ghost flex h-9 w-9 items-center justify-center rounded-xl">
+					<Link to="/" aria-label="Public page" className="btn-ghost flex h-[34px] w-[34px] items-center justify-center rounded-xl">
 						<IconExternal size={16} />
 					</Link>
-					<button type="button" onClick={doLogout} aria-label="Sign out" className="btn-ghost flex h-9 w-9 items-center justify-center rounded-xl text-[var(--bad)]">
+					<button type="button" onClick={doLogout} aria-label="Sign out" className="btn-ghost flex h-[34px] w-[34px] items-center justify-center rounded-xl text-[var(--bad)]">
 						<IconLogout size={16} />
 					</button>
 				</div>
@@ -167,7 +155,7 @@ const AdminDashboard = () => {
 			<aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[var(--stroke)] bg-[var(--surface-1)] p-5 md:flex">
 				<Wordmark size={28} suffix="admin" />
 				<div className="hazard mt-5 h-1.5 rounded-full" aria-hidden="true" />
-				<dl className="mt-6 space-y-3 text-sm">
+				<dl className="mt-6 space-y-3 text-[13px]">
 					<div>
 						<dt className="text-[var(--text-low)]">Hosting</dt>
 						<dd className="num font-medium">
@@ -183,7 +171,7 @@ const AdminDashboard = () => {
 					<div className="flex gap-2">
 						<Link
 							to="/"
-							className="btn-ghost inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium"
+							className="btn-ghost inline-flex flex-1 items-center justify-center gap-2 h-[34px] px-4 text-[13px] font-medium"
 						>
 							<IconExternal size={15} />
 							Public page
@@ -193,7 +181,7 @@ const AdminDashboard = () => {
 					<button
 						type="button"
 						onClick={doLogout}
-						className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--bad)]/40 px-3 py-2 text-sm font-medium text-[var(--bad)] transition hover:bg-[var(--bad-soft)]"
+						className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--bad)]/40 px-3 py-2 text-[13px] font-medium text-[var(--bad)] transition hover:bg-[var(--bad-soft)]"
 					>
 						<IconLogout size={15} />
 						Sign out
@@ -203,10 +191,10 @@ const AdminDashboard = () => {
 
 			<main className="w-full max-w-4xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
 				<div className="flex flex-wrap items-end justify-between gap-4">
-					<h1 className="display text-4xl font-extrabold" style={{ fontVariationSettings: '"wdth" 82' }}>
+					<h1 className="text-[24px] font-semibold tracking-[-0.01em]">
 						Hosted files
 					</h1>
-					<p className="num text-sm text-[var(--text-low)] md:hidden">
+					<p className="num text-[13px] text-[var(--text-low)] md:hidden">
 						{fileCount} file{fileCount === 1 ? "" : "s"}, {formatBytes(totalBytes)}
 					</p>
 				</div>
@@ -235,7 +223,7 @@ const AdminDashboard = () => {
 					<button
 						type="submit"
 						disabled={!folderName.trim()}
-						className="btn-label inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[15px]"
+						className="btn-label inline-flex items-center justify-center gap-2 h-[34px] px-4 text-[13px]"
 					>
 						<IconFolderPlus size={16} />
 						Create folder
@@ -243,18 +231,18 @@ const AdminDashboard = () => {
 				</form>
 
 				<div className="mt-6">
-					{isLoading && <p className="py-10 text-center text-sm text-[var(--text-low)]">Loading files…</p>}
+					{isLoading && <p className="py-10 text-center text-[13px] text-[var(--text-low)]">Loading files…</p>}
 					{error && !data && (
 						<div className="rounded-2xl border border-dashed border-[var(--bad)]/50 bg-[var(--bad-soft)] px-6 py-10 text-center" role="alert">
 							<p className="font-medium">Couldn't load the file list</p>
-							<p className="mt-1 text-sm text-[var(--text-mid)]">{error.message}</p>
-							<button type="button" onClick={() => mutate()} className="btn-ghost mt-4 rounded-xl px-4 py-2 text-sm font-medium">
+							<p className="mt-1 text-[13px] text-[var(--text-mid)]">{error.message}</p>
+							<button type="button" onClick={() => mutate()} className="btn-ghost mt-4 inline-flex h-[34px] items-center px-4 text-[13px] font-medium">
 								Try again
 							</button>
 						</div>
 					)}
 					{data && files.length === 0 && (
-						<p className="rounded-2xl border border-dashed border-[var(--stroke-strong)] px-6 py-10 text-center text-sm text-[var(--text-mid)]">
+						<p className="rounded-2xl border border-dashed border-[var(--stroke-strong)] px-6 py-10 text-center text-[13px] text-[var(--text-mid)]">
 							Nothing hosted yet. Files uploaded on the public page show up here.
 						</p>
 					)}

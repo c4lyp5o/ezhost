@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { login, isAdmin } from "../auth.js";
 import Wordmark from "../components/Wordmark.jsx";
+import Backdrop from "../ez/Backdrop";
 import { IconLock, IconLoader } from "../components/Icons.jsx";
 
 const AdminLogin = () => {
@@ -26,7 +27,7 @@ const AdminLogin = () => {
 
 	if (authed === null) {
 		return (
-			<div className="flex min-h-dvh items-center justify-center bg-[var(--surface-0)] text-sm text-[var(--text-low)]">
+			<div className="flex min-h-dvh items-center justify-center bg-[var(--surface-0)] text-[13px] text-[var(--text-low)]">
 				Checking your session…
 			</div>
 		);
@@ -55,13 +56,14 @@ const AdminLogin = () => {
 	};
 
 	return (
-		<div className="flex min-h-dvh items-center justify-center bg-[var(--surface-0)] px-4 py-10">
-			<div className="w-full max-w-sm">
+		<div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-[var(--surface-0)] px-4 py-10">
+			<Backdrop className="-z-10" opacity={0.45} nodes={14} />
+			<div className="relative w-full max-w-sm">
 				<div className="mb-8 flex flex-col items-start gap-4">
 					<Link to="/" className="rounded-lg" aria-label="Back to the public page">
 						<Wordmark size={40} />
 					</Link>
-					<h1 className="display text-4xl font-extrabold" style={{ fontVariationSettings: '"wdth" 82' }}>
+					<h1 className="text-[24px] font-semibold tracking-[-0.01em]">
 						Admin sign in
 					</h1>
 				</div>
@@ -73,9 +75,9 @@ const AdminLogin = () => {
 					animate={shake && !reduce ? { x: [0, -10, 9, -6, 4, 0] } : undefined}
 					transition={{ duration: 0.38 }}
 				>
-					<div className="hazard absolute inset-y-0 left-0 w-2" aria-hidden="true" />
+					<div className="hazard absolute inset-y-0 left-0 w-px" aria-hidden="true" />
 					<label className="flex flex-col gap-2">
-						<span className="text-sm font-medium text-[var(--text-mid)]">Admin password</span>
+						<span className="text-[13px] font-medium text-[var(--text-mid)]">Admin password</span>
 						<input
 							type="password"
 							value={password}
@@ -90,7 +92,7 @@ const AdminLogin = () => {
 					</label>
 
 					{error && (
-						<p id="login-error" role="alert" className="text-sm text-[var(--bad)]">
+						<p id="login-error" role="alert" className="text-[13px] text-[var(--bad)]">
 							{error}
 						</p>
 					)}
@@ -98,14 +100,14 @@ const AdminLogin = () => {
 					<button
 						type="submit"
 						disabled={busy}
-						className="btn-label inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px]"
+						className="btn-label inline-flex items-center justify-center gap-2 h-[34px] px-4 text-[13px]"
 					>
 						{busy ? <IconLoader size={16} /> : <IconLock size={16} />}
 						{busy ? "Signing in…" : "Sign in"}
 					</button>
 				</motion.form>
 
-				<p className="mt-6 text-sm text-[var(--text-low)]">
+				<p className="mt-6 text-[13px] text-[var(--text-low)]">
 					Just here for files?{" "}
 					<Link to="/" className="font-medium text-[var(--text-hi)] underline underline-offset-4">
 						Go to the public page
