@@ -9,7 +9,9 @@ Build: docker compose -f compose.vault.yml build
 Deployment is NOT performed automatically. The example binds loopback port 5097;
 an HTTPS reverse proxy must forward to it. Adapt the routing to the real proxy.
 Set VAULT_ORIGIN to the exact external origin (required for POST checks behind TLS).
-Do not expose this service over plain HTTP. No public DNS changes have been made.
+Do not expose this service over plain HTTP. The home deployment uses
+https://test.calypso.dedyn.io through Traefik on traefik_default; compose includes
+the router labels. The host port remains loopback-only.
 
 Before deployment create the host folder and its inbox subfolder. Mount the parent
 read-only and only inbox read-write (see compose.vault.yml). The inbox must be
@@ -23,12 +25,14 @@ kernel-level sandbox against a hostile local writer).
 On the new container, run:
 docker compose -f compose.vault.yml exec -e VAULT_QR_PATH=/app/data/enroll.svg vault bun vault-setup.js
 
-Retrieve that file privately, scan it with an authenticator, then run:
-docker compose -f compose.vault.yml exec vault bun vault-setup.js SIX_DIGIT_CODE
+Successful private QR creation activates enrollment immediately; no confirmation
+command is needed. Retrieve the file privately, scan it with an authenticator,
+then sign in with a current code. QR creation failures leave enrollment inactive.
+Existing enrollments are never regenerated or reset by this command.
 
-Delete the private QR file immediately after confirmation. Never publish the SVG,
+Delete the private QR file immediately after scanning. Never publish the SVG,
 copy it into the served folder, or put its contents in logs/chat. No HTTP enrollment
-endpoint exists. Before confirmation all login attempts fail closed. Restarting
+endpoint exists. Before successful QR creation all login attempts fail closed. Restarting
 preserves enrollment. No remote reset route exists; lost-authenticator recovery
 requires host access and deliberate replacement of the dedicated authentication DB.
 This also revokes all sessions. OTP verification allows one 30-second step of drift;
