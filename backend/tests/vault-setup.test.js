@@ -27,6 +27,11 @@ test("private QR activates enrollment and login without confirmation, survives r
 		const db = new Database(dbPath);
 		const row = db.query("SELECT * FROM enrollment").get();
 		expect(row.confirmed).toBe(1);
+		const beforeDisplay = JSON.stringify(row);
+		const display = await run("--show");
+		expect(display.code).not.toBe(0);
+		expect(display.output).toBe("");
+		expect(JSON.stringify(db.query("SELECT * FROM enrollment").get())).toBe(beforeDisplay);
 		const { createVault } = await import("../vault.js");
 		const vault = createVault({ dbPath, root: dir, dist: dir, secure: false });
 		const code = new OTPAuth.TOTP({ secret: row.secret }).generate();

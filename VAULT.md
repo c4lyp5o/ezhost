@@ -46,6 +46,17 @@ Global throttling deliberately trades availability for resistance to distributed
 guessing. Listing/download APIs require a session, reject symlink paths, and have
 no general write operations. Downloads are attachments and no-store.
 
+## Display the existing QR privately
+Vault startup logs contain only the private SVG path (if retained) and this command:
+
+`docker compose -f compose.vault.yml exec vault bun vault-setup.js --show`
+
+Run from the repository over your private SSH terminal. It renders the existing
+seed as a terminal QR without changing enrollment or replay state. It refuses
+non-interactive stdout; do not record the terminal or share the QR. The original
+SVG may be deleted after scanning; display regenerates the QR in memory from the
+stored seed, not a new secret. Nothing sensitive is printed during startup.
+
 ## Private upload inbox
 After login, the file picker uploads one file at a time to inbox, regardless of
 which folder is being browsed. The server streams raw bytes with a 100 MiB cap
