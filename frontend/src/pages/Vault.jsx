@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { IconLock as LockKeyhole, IconFolder as Folder, IconFile as File, IconChevron as ArrowUpLeft, IconExternal as ArrowDownToLine, IconUpload as Upload, IconShield as ShieldCheck } from "../components/Icons";
+import ThemeButton from "../components/ThemeButton";
+import "./vault.css";
 
 export default function Vault() {
 	const [files, setFiles] = useState(null);
@@ -34,22 +37,26 @@ export default function Vault() {
 		} catch { setUploadMessage("Upload failed. Check the inbox before retrying."); }
 		finally { setUploading(false); }
 	}
-	return <main style={{ maxWidth: 850, margin: "4rem auto", padding: 24 }}>
-		<h1>Our Vault</h1>
-		{files === null ? <form onSubmit={login}>
-			<p>Enter your authenticator code to unlock.</p>
-			<label>One-time code <input autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value)} /></label>
-			<button type="submit">Unlock</button><p role="alert">{error}</p>
+	return <main className="vault-shell">
+		<header className="vault-header"><a href="/" className="vault-brand"><LockKeyhole size={18} />our<span>vault</span></a><div className="vault-header-right"><span className="vault-eyebrow">PRIVATE SPACE</span><ThemeButton /></div></header>
+		{files === null ? <form className="vault-login" onSubmit={login}>
+			<div className="vault-lock-icon"><LockKeyhole size={28} strokeWidth={1.3} /></div>
+			<span className="vault-eyebrow">JUST BETWEEN US</span><h1>Our Vault<span>.</span></h1>
+			<p className="vault-intro">A quiet place for the things we share.<br />Unlock with your authenticator to step inside.</p>
+			<label className="vault-code-label">One-time code <input className="field vault-code" placeholder="000000" aria-label="One-time code" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value)} /></label>
+			<button className="btn-label vault-unlock" type="submit">Unlock vault <ArrowUpLeft size={16} /></button><p className="vault-error" role="alert">{error}</p>
+			<div className="vault-login-note"><ShieldCheck size={14} /> Private access · Authenticator protected</div>
 		</form> : <>
-			<button onClick={async () => { await fetch("/api/v1/vault/logout", { method: "POST" }); setFiles(null); setFolder(""); }}>Lock vault</button>
-			<p>{folder || "/"} · Browse/download · Uploads go to inbox only</p>
-			<label>Upload to inbox (100 MiB max) <input type="file" disabled={uploading} onChange={upload} /></label>
+			<section className="vault-browser"><div className="vault-browser-heading"><div><span className="vault-eyebrow">OUR SHARED SPACE</span><h1>Your files<span>.</span></h1></div><button className="btn-ghost vault-action" onClick={async () => { await fetch("/api/v1/vault/logout", { method: "POST" }); setFiles(null); setFolder(""); }}><LockKeyhole size={14} /> Lock vault</button></div>
+			<div className="vault-upload"><div><Upload size={19} /><div><strong>Leave something for us</strong><p>Uploads land in the inbox. Up to 100 MiB, no overwrites.</p></div></div><label className="btn-label vault-action">{uploading ? "Uploading…" : "Choose file"}<input className="vault-file-input" aria-label="Upload to inbox" type="file" disabled={uploading} onChange={upload} /></label></div>
 			<p role="status">{uploading ? "Uploading…" : uploadMessage}</p>
-			{folder && <button onClick={() => load(folder.split("/").slice(0, -1).join("/"))}>Parent folder</button>}
-			<ul>{files.map((file) => {
+			<div className="vault-path"><span className="url">vault / {folder}</span><span>{files.length} {files.length === 1 ? "item" : "items"}</span></div>
+			{folder && <button className="vault-parent" onClick={() => load(folder.split("/").slice(0, -1).join("/"))}><ArrowUpLeft size={16} /> Parent folder</button>}
+			<ul className="vault-files">{files.map((file) => {
 				const target = [folder, file.name].filter(Boolean).join("/");
-				return <li key={file.name}>{file.isDirectory ? <button onClick={() => load(target)}>{file.name}/</button> : <a href={"/api/v1/vault/download?path=" + encodeURIComponent(target)}>{file.name}</a>}</li>;
-			})}</ul>
+				return <li key={file.name}>{file.isDirectory ? <button onClick={() => load(target)}><Folder size={19} /><span>{file.name}</span><small>Folder</small></button> : <a href={"/api/v1/vault/download?path=" + encodeURIComponent(target)}><File size={19} /><span>{file.name}</span><ArrowDownToLine size={16} /></a>}</li>;
+			})}</ul>{files.length === 0 && <div className="vault-empty"><Folder size={28} /><p>A little room for something new.</p><span>This folder is empty.</span></div>}</section>
 		</>}
+		<footer className="vault-footer"><span>OUR VAULT</span><span>For you & me.</span></footer>
 	</main>;
 }

@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — 2026-11-18
+## Unreleased — 2026-11-17
+
+- Style the vault OTP wall and file browser with the shared ez theme, responsive
+  layouts, theme switch, file rows and inbox upload controls.
+- Activate enrollment after successful private QR generation; remove the separate
+  OTP confirmation command. Failed QR writes remain inactive; existing enrollments
+  cannot be overwritten.
 
 - Add isolated Our Vault mode: private TOTP enrollment, replay protection,
   persistent login throttling, hashed 30-minute sessions and authenticated downloads.
