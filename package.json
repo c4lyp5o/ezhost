@@ -7,15 +7,15 @@
 		"install:client": "cd frontend && bun install",
 		"install:backend": "cd backend && bun install",
 		"install": "bun install:backend && bun install:client",
-		"dev:backend": "cd backend && bun --watch index.js",
+		"dev:backend": "cd backend && bun --watch start.js",
 		"dev:client": "cd frontend && bun dev",
 		"dev": "conc -n \"BACKEND,CLIENT\" -c \"cyan,magenta\" \"bun run dev:backend\" \"bun run dev:client\"",
 		"test:backend": "cd backend && bun test",
 		"build:client": "cd frontend && bun run build",
-		"start": "NODE_ENV=production bun backend/index.js"
+		"start": "NODE_ENV=production bun backend/start.js"
 	},
 	"devDependencies": {
-		"@types/bun": "latest",
-		"concurrently": "^9.2.4"
+		"@types/bun": "^1.4.4",
+		"concurrently": "^10.0.7"
 	}
 }
