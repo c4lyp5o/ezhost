@@ -6,7 +6,7 @@ import { createVault } from "../vault";
 import { saveInboxUpload } from "../services/vault-upload";
 
 test("authenticated inbox upload roundtrip, collisions, CSRF and path isolation", async () => {
-	const dir = mkdtempSync(path.join(process.env.TMPDIR || "/home/calypso/.hermes/cache/scratch", "upload-"));
+	const dir = mkdtempSync(path.join(process.env.TMPDIR || process.env.RUNNER_TEMP || process.cwd(), "upload-"));
 	const inbox = path.join(dir, "inbox"); mkdirSync(inbox);
 	const vault = createVault({ dbPath: path.join(dir, "auth.db"), root: dir, inbox, dist: dir, secure: false });
 	const token = "test-session";

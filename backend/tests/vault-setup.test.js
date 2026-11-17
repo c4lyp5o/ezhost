@@ -5,7 +5,7 @@ import { Database } from "bun:sqlite";
 import * as OTPAuth from "otpauth";
 
 test("private enrollment generates QR, confirms once, survives restart", async () => {
-	const dir = mkdtempSync(path.join(process.env.TMPDIR || "/home/calypso/.hermes/cache/scratch", "enroll-"));
+	const dir = mkdtempSync(path.join(process.env.TMPDIR || process.env.RUNNER_TEMP || process.cwd(), "enroll-"));
 	const dbPath = path.join(dir, "vault.sqlite");
 	const qr = path.join(dir, "qr.svg");
 	const run = async (...args) => {

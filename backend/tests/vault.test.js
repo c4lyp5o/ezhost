@@ -5,7 +5,7 @@ import { createVault } from "../vault";
 import * as OTPAuth from "otpauth";
 
 test("vault HTTP boundaries, replay, persistence and throttling", async () => {
-	const dir = mkdtempSync(path.join(process.env.TMPDIR || "/home/calypso/.hermes/cache/scratch", "vault-"));
+	const dir = mkdtempSync(path.join(process.env.TMPDIR || process.env.RUNNER_TEMP || process.cwd(), "vault-"));
 	const root = path.join(dir, "files"); mkdirSync(root);
 	writeFileSync(path.join(root, "private.txt"), "private payload");
 	writeFileSync(path.join(dir, "outside"), "outside");
