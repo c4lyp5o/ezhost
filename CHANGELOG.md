@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 2026-11-18
+
+- Add isolated Our Vault mode: private TOTP enrollment, replay protection,
+  persistent login throttling, hashed 30-minute sessions and authenticated downloads.
+- Add authenticated streaming inbox uploads (100 MiB cap), exclusive creation,
+  safe filenames and cleanup on failed uploads; parent folder stays read-only.
+- Add separate hardened Docker Compose configuration and enrollment guide.
+- Update frontend/backend dependencies; pin Docker Bun 1.4.4, migrate to Vite 8
+  and stable React Compiler; freeze dependency installs.
+- Keep existing public file-host behavior separate from vault mode.
+
 ## 1.0.0 — 2026-11-01
 
 First release. ezhost is now an Elysia + Bun app with a redesigned React UI.

@@ -8,12 +8,15 @@ import ThemedToast from "./components/ThemedToast.jsx";
 import "@fontsource-variable/public-sans";
 import "./index.css";
 import { MotionRoot } from "./ez/motion";
+import Vault from "./pages/Vault.jsx";
+
+const vaultMode = await fetch("/api/v1/vault/status").then((r) => r.ok ? r.json() : null).then((data) => data?.mode === "vault").catch(() => false);
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<ThemeProvider>
 			<MotionRoot>
-				<RouterProvider router={router} />
+				{vaultMode ? <Vault /> : <RouterProvider router={router} /> }
 				<ThemedToast />
 			</MotionRoot>
 		</ThemeProvider>

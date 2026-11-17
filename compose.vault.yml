@@ -1,0 +1,37 @@
+services:
+  vault:
+    build: .
+    container_name: our-vault
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_default
+      - traefik.http.routers.our-vault.rule=Host(`test.calypso.dedyn.io`)
+      - traefik.http.routers.our-vault.entrypoints=websecure
+      - traefik.http.routers.our-vault.tls.certresolver=leresolver
+      - traefik.http.services.our-vault.loadbalancer.server.port=5000
+    environment:
+      EZHOST_MODE: vault
+      NODE_ENV: production
+      PUBLIC_DIR: /vault
+      VAULT_INBOX: /vault/inbox
+      EZHOST_DB: /app/data/vault.sqlite
+      VAULT_ORIGIN: https://test.calypso.dedyn.io
+    ports:
+      - "127.0.0.1:5097:5000"
+    volumes:
+      - /home/calypso/workspace/testfiles:/vault:ro
+      - /home/calypso/workspace/testfiles/inbox:/vault/inbox:rw
+      - vault-auth:/app/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+networks:
+  traefik:
+    external: true
+    name: traefik_default
+volumes:
+  vault-auth:
