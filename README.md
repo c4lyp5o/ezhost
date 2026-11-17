@@ -17,6 +17,16 @@ Every request is rate-limited to 50/min per client IP (429 after that),
 including `/login`. Uploads are public; they are served with a CSP `sandbox`
 header so an uploaded page can't act with the admin's session.
 
+## Our Vault (private mode)
+
+Set `EZHOST_MODE=vault` to run an isolated OTP-gated file browser instead of the
+public uploader. Use a separate container and auth volume; public routes are not
+mounted. Authenticated uploads go only to the writable inbox; other files remain
+read-only. See [VAULT.md](VAULT.md) for enrollment, limits and deployment.
+
+Docker pins Bun 1.4.4; frontend uses Vite 8 and stable React Compiler. Dependency
+installs in Docker use frozen lockfiles.
+
 ## Development
 
 ```bash

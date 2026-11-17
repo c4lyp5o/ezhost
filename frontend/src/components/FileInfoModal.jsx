@@ -42,6 +42,8 @@ const FileInfoModal = ({ file, open, onClose }) => {
 		<Dialog open={open} onClose={onClose} labelledBy="file-title" wide>
 			<div className="mb-5 flex items-start gap-3">
 				<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-dim text-accent">
+					{/* getFileIcon returns an imported module-level component, never a new component. */}
+					{/* eslint-disable-next-line react-hooks/static-components */}
 					<FileIcon size={21} />
 				</span>
 				<div className="min-w-0 flex-1">

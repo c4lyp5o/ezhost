@@ -15,7 +15,7 @@ const Parcel3D = ({ excited = false, theme = "dark", reduceMotion = false, onRea
 	const host = useRef(null);
 	const state = useRef({ excited, theme });
 	const readyCb = useRef(onReady);
-	readyCb.current = onReady;
+	useEffect(() => { readyCb.current = onReady; }, [onReady]);
 
 	// Keep live props in a ref so the scene isn't rebuilt on every change.
 	useEffect(() => {

@@ -1,5 +1,5 @@
 # Stage 1: Build the React client
-FROM oven/bun:1.3-alpine AS builder
+FROM oven/bun:1.4.4-alpine AS builder
 
 WORKDIR /app
 
@@ -7,10 +7,10 @@ WORKDIR /app
 COPY package.json ./
 COPY frontend ./frontend
 WORKDIR /app/frontend
-RUN bun install && bun run build
+RUN bun install --frozen-lockfile && bun run build
 
 # Stage 2: Production — Elysia backend
-FROM oven/bun:1.3-alpine
+FROM oven/bun:1.4.4-alpine
 
 # curl for the healthcheck, tzdata for correct local timestamps
 RUN apk add --no-cache curl tzdata
@@ -21,8 +21,8 @@ ENV EZHOST_DB=/app/data/ezhost.sqlite
 WORKDIR /app
 
 # Backend deps first (layer-cached separately from source)
-COPY backend/package.json ./backend/
-RUN cd backend && bun install --production
+COPY backend/package.json backend/bun.lock ./backend/
+RUN cd backend && bun install --frozen-lockfile --production
 
 # Backend source, uploads dir, and the built client
 COPY backend ./backend
@@ -40,4 +40,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000/api/v1/healthcheck || exit 1
 
-CMD ["bun", "index.js"]
+ENV HOST=0.0.0.0
+CMD ["bun", "start.js"]
