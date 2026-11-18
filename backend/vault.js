@@ -68,6 +68,7 @@ export function createVault({ dbPath, root, dist, secure = true, trustedProxy = 
 		})
 		.get("/api/v1/healthcheck", () => ({ success: true }))
 		.get("/api/v1/vault/status", () => ({ mode: "vault" }))
+		.get("/api/v1/vault/session", () => ({ authenticated: true }))
 		.post("/api/v1/vault/login", ({ body, cookie, set }) => {
 			if (!verify(body?.code)) { set.status = 401; return { success: false, message: "Invalid or already used code" }; }
 			const token = randomBytes(32).toString("hex");
@@ -87,7 +88,16 @@ export function createVault({ dbPath, root, dist, secure = true, trustedProxy = 
 		}, { parse: "none", detail: { summary: "Upload to private inbox", description: "Authenticated, exclusive-create upload; 100 MiB maximum.", tags: ["Vault"] } })
 		.get("/api/v1/vault/files", ({ query }) => {
 			const dir = resolve(query.path);
-			return { files: readdirSync(dir, { withFileTypes: true }).filter((e) => !e.isSymbolicLink() && (e.isDirectory() || e.isFile())).map((e) => ({ name: e.name, isDirectory: e.isDirectory() })) };
+			return { files: readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+				try {
+					const stat = lstatSync(path.join(dir, entry.name));
+					if (!stat.isDirectory() && !stat.isFile()) return [];
+					return [{ name: entry.name, isDirectory: stat.isDirectory(), size: stat.isFile() ? stat.size : null, createdAt: stat.birthtimeMs > 0 ? stat.birthtime.toISOString() : null, updatedAt: stat.mtime.toISOString() }];
+				} catch (error) {
+					if (error.code === "ENOENT") return [];
+					throw error;
+				}
+			}) };
 		})
 		.get("/api/v1/vault/download", ({ query, set }) => {
 			const file = resolve(query.path);

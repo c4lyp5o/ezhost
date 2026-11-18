@@ -19,6 +19,7 @@ test("vault HTTP boundaries, replay, persistence and throttling", async () => {
 	let cookie;
 	try {
 		expect((await request("/api/v1/vault/files")).status).toBe(401);
+		expect((await request("/api/v1/vault/session")).status).toBe(401);
 		expect((await request("/api/v1/vault/download?path=private.txt")).status).toBe(401);
 		expect((await request("/static/private.txt")).status).toBe(404);
 		expect((await request("/api/v1/upload", { method: "POST", headers: { Origin: base } })).status).toBe(404);
@@ -28,6 +29,11 @@ test("vault HTTP boundaries, replay, persistence and throttling", async () => {
 		cookie = response.headers.get("set-cookie").split(";")[0];
 		expect((await login()).status).toBe(401);
 		const auth = { headers: { Cookie: cookie } };
+		expect((await request("/api/v1/vault/session", auth)).status).toBe(200);
+		const entry = (await (await request("/api/v1/vault/files", auth)).json()).files[0];
+		expect(entry.size).toBe(15);
+		expect(Number.isFinite(Date.parse(entry.updatedAt))).toBe(true);
+		expect(entry.createdAt === null || Number.isFinite(Date.parse(entry.createdAt))).toBe(true);
 		expect((await (await request("/api/v1/vault/files", auth)).json()).files.map((f) => f.name)).toEqual(["private.txt"]);
 		expect(await (await request("/api/v1/vault/download?path=private.txt", auth)).text()).toBe("private payload");
 		expect((await request("/api/v1/vault/download?path=escape", auth)).status).toBe(404);
