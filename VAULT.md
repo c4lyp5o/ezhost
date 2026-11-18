@@ -37,6 +37,13 @@ preserves enrollment. No remote reset route exists; lost-authenticator recovery
 requires host access and deliberate replacement of the dedicated authentication DB.
 This also revokes all sessions. OTP verification allows one 30-second step of drift;
 accepted steps cannot be reused. Sessions expire after 30 minutes.
+Browser reloads restore an existing valid session through the authenticated session
+endpoint; they do not extend its expiry. File listings refresh every five seconds
+while the page is active, using SWR. Transient failures preserve the last list;
+an authentication failure hides it. Sort by name, created date, updated date or
+size in either direction (folders first). Dates are filesystem birth/modified
+timestamps, not upload history; unsupported birth times display as unavailable.
+Directory sizes are not recursively calculated.
 
 Five login attempts per client and thirty globally per five minutes, persisted
 across restarts. Both successful and failed attempts count. Unknown peers share a
