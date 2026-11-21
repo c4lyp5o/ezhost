@@ -1,11 +1,11 @@
 // Unknown client route. (Missing files and unknown /api paths get a real
 // 404 from the server; this only covers app URLs.)
 import { Link } from "react-router-dom";
-import Wordmark from "../components/Wordmark.jsx";
+import { Brand } from "../ez/Brand.jsx";
 
 const NotFound = () => (
 	<div className="flex min-h-dvh flex-col items-start justify-center gap-5 bg-[var(--surface-0)] px-6 sm:px-16">
-		<Wordmark size={34} />
+		<Brand name="ezhost" />
 		<h1 className="display max-w-[20ch] text-[24px] font-semibold">
 			This page isn't on the manifest.
 		</h1>

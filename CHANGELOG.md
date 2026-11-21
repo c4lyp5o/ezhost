@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Header, sidebar and sign-in use the shared ez `Brand`: the ez icon and the lowercase name.
+
 ## [1.0.1] - 2026-11-22
 
 ### Changed

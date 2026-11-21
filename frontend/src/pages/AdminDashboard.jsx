@@ -10,7 +10,7 @@ import { logout } from "../auth.js";
 import { formatBytes, formatDate, formatRelative, getFileIcon } from "../utils.js";
 import Dialog from "../components/Dialog.jsx";
 import ThemeButton from "../components/ThemeButton.jsx";
-import Wordmark from "../components/Wordmark.jsx";
+import { Brand } from "../ez/Brand.jsx";
 import {
 	IconFolder,
 	IconTrash,
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
 		<div className="flex min-h-dvh flex-col bg-[var(--surface-0)] text-[var(--text-hi)] md:flex-row">
 			{/* Phone: top bar */}
 			<header className="flex items-center gap-2 border-b border-[var(--stroke)] bg-[var(--surface-1)] px-4 py-3 md:hidden">
-				<Wordmark size={26} suffix="admin" />
+				<Brand name="ezhost" scope="admin" />
 				<div className="ml-auto flex items-center gap-2">
 					{themeButton}
 					<Link to="/" aria-label="Public page" className="btn-ghost flex h-[34px] w-[34px] items-center justify-center rounded-xl">
@@ -153,7 +153,7 @@ const AdminDashboard = () => {
 
 			{/* Desktop: sidebar */}
 			<aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-[var(--stroke)] bg-[var(--surface-1)] p-5 md:flex">
-				<Wordmark size={28} suffix="admin" />
+				<Brand name="ezhost" scope="admin" />
 				<div className="hazard mt-5 h-1.5 rounded-full" aria-hidden="true" />
 				<dl className="mt-6 space-y-3 text-[13px]">
 					<div>
