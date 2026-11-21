@@ -15,7 +15,7 @@
 		"start": "NODE_ENV=production bun backend/start.js"
 	},
 	"devDependencies": {
-		"@types/bun": "^1.4.4",
+		"@types/bun": "^1.4.5",
 		"concurrently": "^10.0.7"
 	}
 }
