@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased — 2026-11-17
+## [Unreleased]
+
+## [1.0.1] - 2026-11-22
+
+### Changed
+- Dependencies updated (majors kept only where the tests passed), Docker image on oven/bun 1.4.5, Biome as the linter, and the shared ez favicon.
 
 - Style the vault OTP wall and file browser with the shared ez theme, responsive
   layouts, theme switch, file rows and inbox upload controls.
