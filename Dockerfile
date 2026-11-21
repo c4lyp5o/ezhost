@@ -1,5 +1,5 @@
 # Stage 1: Build the React client
-FROM oven/bun:1.4.4-alpine AS builder
+FROM oven/bun:1.4.5-alpine AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ WORKDIR /app/frontend
 RUN bun install --frozen-lockfile && bun run build
 
 # Stage 2: Production — Elysia backend
-FROM oven/bun:1.4.4-alpine
+FROM oven/bun:1.4.5-alpine
 
 # curl for the healthcheck, tzdata for correct local timestamps
 RUN apk add --no-cache curl tzdata
@@ -30,8 +30,8 @@ COPY public ./public
 COPY --from=builder /app/dist ./dist
 
 # Run unprivileged: the bun user (uid 1000, from the base image) only needs
-# write access to uploads and the DB directory.
-RUN mkdir -p /app/data && chown -R bun:bun /app/public /app/data
+# write access to uploads, the DB directory and logs/ (backend/logger.js).
+RUN mkdir -p /app/data /app/logs && chown -R bun:bun /app/public /app/data /app/logs
 USER bun
 
 WORKDIR /app/backend

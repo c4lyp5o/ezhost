@@ -69,3 +69,7 @@ writable by that uid (`sudo chown -R 1000:1000 public data`).
 
 Outside Docker the DB defaults to `backend/ezhost.sqlite` regardless of the
 working directory; override with `EZHOST_DB`.
+
+## Development
+
+Setup, commands, tests, linting and the `development` → `master` release flow are in [DEVELOPER.md](DEVELOPER.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).

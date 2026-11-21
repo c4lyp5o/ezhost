@@ -46,6 +46,7 @@ const App = () => {
 
 	// Page-wide drop target. dragenter/leave fire for every child element, so
 	// count depth instead of trusting a single leave event.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: openUpload only calls the setUpload updater, so a stale copy behaves the same
 	useEffect(() => {
 		const enter = (e) => {
 			if (!hasFiles(e)) return;
@@ -122,7 +123,7 @@ const App = () => {
 				</div>
 
 				{isLoading && (
-					<div className="surface space-y-px overflow-hidden rounded-lg" aria-busy="true" aria-label="Loading files">
+					<div className="surface space-y-px overflow-hidden rounded-lg" role="status" aria-busy="true" aria-label="Loading files">
 						{[0, 1, 2].map((i) => (
 							<div key={i} className="flex items-center gap-3.5 px-5 py-3.5">
 								<span className="h-9 w-9 rounded-lg bg-[var(--color-shade)]" />

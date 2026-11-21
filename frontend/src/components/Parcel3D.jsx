@@ -113,7 +113,7 @@ const Parcel3D = ({ excited = false, theme = "dark", reduceMotion = false, onRea
 
 		const teardown = () => {
 			ro.disconnect();
-			disposables.forEach((d) => d.dispose());
+			for (const d of disposables) d.dispose();
 			renderer.dispose();
 			renderer.domElement.remove();
 			delete state.current.applyTheme;

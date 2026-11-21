@@ -15,7 +15,7 @@
 		"qrcode": "^1.5.4"
 	},
 	"devDependencies": {
-		"@types/bun": "^1.4.4"
+		"@types/bun": "^1.4.5"
 	},
 	"peerDependencies": {
 		"typescript": "^7.0.2"
