@@ -2,20 +2,16 @@
 
 ## [Unreleased]
 
-### Changed
-- Header, sidebar and sign-in use the shared ez `Brand`: the ez icon and the lowercase name.
-
 ## [1.0.1] - 2026-11-22
 
 ### Changed
+- Header, sidebar and sign-in use the shared ez `Brand`: the ez icon and the lowercase name.
 - Dependencies updated (majors kept only where the tests passed), Docker image on oven/bun 1.4.5, Biome as the linter, and the shared ez favicon.
-
 - Style the vault OTP wall and file browser with the shared ez theme, responsive
   layouts, theme switch, file rows and inbox upload controls.
 - Activate enrollment after successful private QR generation; remove the separate
   OTP confirmation command. Failed QR writes remain inactive; existing enrollments
   cannot be overwritten.
-
 - Add isolated Our Vault mode: private TOTP enrollment, replay protection,
   persistent login throttling, hashed 30-minute sessions and authenticated downloads.
 - Add authenticated streaming inbox uploads (100 MiB cap), exclusive creation,
