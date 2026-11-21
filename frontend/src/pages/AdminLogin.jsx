@@ -82,6 +82,7 @@ const AdminLogin = () => {
 							type="password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
+							// biome-ignore lint/a11y/noAutofocus: the password field is the only thing on this screen
 							autoFocus
 							required
 							autoComplete="current-password"

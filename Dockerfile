@@ -1,5 +1,5 @@
 # Stage 1: Build the React client
-FROM oven/bun:1.4.4-alpine AS builder
+FROM oven/bun:1.4.5-alpine AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ WORKDIR /app/frontend
 RUN bun install --frozen-lockfile && bun run build
 
 # Stage 2: Production — Elysia backend
-FROM oven/bun:1.4.4-alpine
+FROM oven/bun:1.4.5-alpine
 
 # curl for the healthcheck, tzdata for correct local timestamps
 RUN apk add --no-cache curl tzdata
