@@ -41,3 +41,9 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`fix
 ## Docker
 
 The image is built from `Dockerfile` on `oven/bun:1.4.5-alpine`. Keep the Bun version there and `bun-version` in `.github/workflows/` in step, and smoke-test a locally built image (`docker build -t ezhost .`) after changing either.
+
+## Frontend
+
+React 19 + Vite 8 + Tailwind 4, React Compiler through @rolldown/plugin-babel.
+
+The entrypoint detects vault mode through `/api/v1/vault/status` and renders the OTP wall without fetching file data before authentication. The private Vault page supports browsing, attachment downloads, logout and inbox-only uploads. Public mode keeps the public uploader and admin dashboard.

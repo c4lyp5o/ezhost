@@ -2,14 +2,14 @@
 import { Link } from "react-router-dom";
 import { IconSearch } from "./Icons.jsx";
 import ThemeButton from "./ThemeButton.jsx";
-import Wordmark from "./Wordmark.jsx";
+import { Brand } from "../ez/Brand.jsx";
 
 const Header = ({ searchTerm, setSearchTerm }) => {
 	return (
 		<header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--surface-0)]">
 			<div className="flex h-14 items-center gap-3 px-4 sm:px-8">
 				<Link to="/" className="shrink-0 rounded-lg" aria-label="ezhost home">
-					<Wordmark size={28} suffix="Self-hosted file hosting" collapse />
+					<Brand name="ezhost" scope="Self-hosted file hosting" />
 				</Link>
 				<div className="ml-auto flex min-w-0 items-center gap-2">
 					<label className="relative block w-full min-w-0 sm:w-72">
