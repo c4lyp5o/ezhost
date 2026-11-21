@@ -48,9 +48,9 @@ jobs:
         working-directory: backend
         run: bun test
 
-      - name: 🧹 Lint frontend
-        working-directory: frontend
-        run: bun run lint
+      # Biome lives at the root; --ignore-scripts skips the root "install" script.
+      - name: 🧹 Lint (Biome)
+        run: bun install --frozen-lockfile --ignore-scripts && bun run lint
 
       - name: 🌐 Build frontend
         working-directory: frontend
