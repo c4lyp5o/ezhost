@@ -252,3 +252,7 @@ Run backend: bun test
 Run frontend: bun run build
 Vault integration tests use real loopback HTTP, scratch SQLite and disposable files.
 Container build/browser/proxy verification must be reported separately.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
