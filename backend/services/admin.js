@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { DB_PATH } from "../config";
+import { logger } from "../logger.js";
 
 export { DB_PATH };
 const db = new Database(DB_PATH);
@@ -28,14 +29,14 @@ export async function initDB() {
   if (!admin) {
     const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminPassword) {
-      console.error("ADMIN_PASSWORD environment variable is required for first run");
+      logger.error("ADMIN_PASSWORD environment variable is required for first run");
       process.exit(1);
     }
     const hash = await Bun.password.hash(adminPassword, { algorithm: "bcrypt" });
     // Use prepared statement to avoid binding issues
     const stmt = db.prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
     stmt.run("admin", hash);
-    console.log("Admin user created. Username: admin, Password: [from ADMIN_PASSWORD]");
+    logger.info("Admin user created. Username: admin, Password: [from ADMIN_PASSWORD]");
   }
 }
 
