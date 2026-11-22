@@ -2,9 +2,19 @@
 
 ## [Unreleased]
 
-## [1.0.1] - 2026-11-22
+## [1.1.0] - 2026-11-22
+
+### Upgrading
+Everything now lives in one folder, `/data` (`DATA_DIR`): `ezhost.sqlite`, the hosted files in `public/`, and `logs/`.
+
+1. Stop the container.
+2. Make one host folder holding `ezhost.sqlite` (from your old `/app/data` volume) and `public/` (your old `/app/public` volume).
+3. Mount it as `- ./data:/data` instead of the two old volumes, and start it.
+
+If you skip this, the app keeps using the old locations and logs a warning, so nothing is lost.
 
 ### Changed
+- All state lives under one folder, `DATA_DIR` (`/data` in the image, `data/` when run from source), declared as a Docker volume. See **Upgrading**.
 - The Docker image follows the ez standard: Alpine, runs as the unprivileged `bun` user (uid 1000), and a `HEALTHCHECK` that reports healthy within seconds of start.
 - CI is two workflows, `test.yml` and `publish.yml`. Merging to `master` publishes `:<version>`, `:latest` and `:sha-<commit>` after the tests (and an image boot check) pass; a `vX.Y.Z` tag is optional and adds a GitHub Release.
 - Every push to `development` publishes `:development` and `:sha-<commit>` after the tests, so unreleased changes can be tried without touching `master`.

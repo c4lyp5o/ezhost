@@ -40,7 +40,8 @@ Guidance for AI coding agents working on ezhost, one of the ez* self-hosted apps
 ### Docker
 
 - One Dockerfile shape in every repo (the ez standard): a `build` stage on `oven/bun:x.y.z-alpine` for the frontend, then an Alpine runtime with OCI labels, `--production --frozen-lockfile --ignore-scripts`, `USER bun` (uid 1000) and `HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --start-interval=2s --retries=3 CMD wget -qO- "http://127.0.0.1:${PORT}<health>"`. Static apps use `nginx-unprivileged` with the same healthcheck.
-- No root processes at runtime: no crond or root entrypoints. Schedule recurring jobs inside the app. Every writable directory (data, uploads, logs) is created and `chown`ed in the `Dockerfile`; never write to a relative path.
+- No root processes at runtime: no crond or root entrypoints. Schedule recurring jobs inside the app.
+- **All state lives under `DATA_DIR`**: `/data` in the image (created, `chown`ed to `bun` and declared `VOLUME ["/data"]`), `<repo>/data` from source (gitignored). The database is `$DATA_DIR/<app>.sqlite`; uploads, hosted files and logs are subfolders (`$DATA_DIR/logs`). One mount per app: `./<app>-data:/data`. Never write to a relative path. When moving state, keep reading the old location until it is moved (`keepLegacy` in `datadir.js`) so an upgrade never starts on an empty database.
 - Configuration comes from the environment at runtime (`env_file` in compose). Never `COPY .env`.
 - After changing the `Dockerfile`, the Bun version or a dependency, build the image and boot it with throwaway config. Tests don't load every entry point (workers especially).
 
@@ -71,4 +72,4 @@ Run from the repo root with [Bun](https://bun.sh).
 ### Repo rules
 
 - Uploads and the vault are public-facing: keep filename sanitising (control characters, path separators) and size limits covered by tests.
-- The image runs as `bun`; `public/`, `/app/data` and `/app/logs` are the only writable paths.
+- The image runs as `bun`; `/data` (`ezhost.sqlite`, `public/` hosted files, `logs/`) is the only writable path.
