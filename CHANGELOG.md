@@ -14,6 +14,7 @@ Everything now lives in one folder, `/data` (`DATA_DIR`): `ezhost.sqlite`, the h
 If you skip this, the app keeps using the old locations and logs a warning, so nothing is lost.
 
 ### Changed
+- Logs go to the console (`docker logs`) and to rotating files in `$DATA_DIR/logs` (`ezhost.log`): 5 MB per file, 3 files kept. Each process writes its own file. The log file is now `ezhost.log` (was `general.log`).
 - All state lives under one folder, `DATA_DIR` (`/data` in the image, `data/` when run from source), declared as a Docker volume. See **Upgrading**.
 - The Docker image follows the ez standard: Alpine, runs as the unprivileged `bun` user (uid 1000), and a `HEALTHCHECK` that reports healthy within seconds of start.
 - CI is two workflows, `test.yml` and `publish.yml`. Merging to `master` publishes `:<version>`, `:latest` and `:sha-<commit>` after the tests (and an image boot check) pass; a `vX.Y.Z` tag is optional and adds a GitHub Release.
