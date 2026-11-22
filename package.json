@@ -2,7 +2,7 @@
 	"name": "ezhost",
 	"private": true,
 	"type": "module",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"scripts": {
 		"install:client": "cd frontend && bun install",
 		"install:backend": "cd backend && bun install",

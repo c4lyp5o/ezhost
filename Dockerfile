@@ -23,15 +23,15 @@ ENV TZ=Asia/Kuala_Lumpur \
 	NODE_ENV=production \
 	HOST=0.0.0.0 \
 	PORT=5000 \
-	EZHOST_DB=/app/data/ezhost.sqlite
+	DATA_DIR=/data
 WORKDIR /app
 COPY backend/package.json backend/bun.lock ./backend/
 RUN cd backend && bun install --production --frozen-lockfile --ignore-scripts
 COPY backend ./backend
-COPY public ./public
 COPY --from=build /app/dist ./dist
-RUN mkdir -p /app/data /app/logs /app/public && chown -R bun:bun /app/data /app/logs /app/public
+RUN mkdir -p /data /data/public /data/logs && chown -R bun:bun /data /data/public /data/logs
 USER bun
+VOLUME ["/data"]
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --start-interval=2s --retries=3 \
 	CMD wget -qO- "http://127.0.0.1:${PORT}/api/v1/healthcheck" >/dev/null || exit 1

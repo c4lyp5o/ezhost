@@ -16,15 +16,15 @@ services:
       NODE_ENV: production
       PUBLIC_DIR: /vault
       VAULT_INBOX: /vault/inbox
-      VAULT_QR_PATH: /app/data/enrollment.svg
-      EZHOST_DB: /app/data/vault.sqlite
+      VAULT_QR_PATH: /data/enrollment.svg
+      EZHOST_DB: /data/vault.sqlite
       VAULT_ORIGIN: https://test.calypso.dedyn.io
     ports:
       - "127.0.0.1:5097:5000"
     volumes:
       - /home/calypso/workspace/testfiles:/vault:ro
       - /home/calypso/workspace/testfiles/inbox:/vault/inbox:rw
-      - vault-auth:/app/data
+      - vault-auth:/data
     security_opt:
       - no-new-privileges:true
     cap_drop:

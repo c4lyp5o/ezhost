@@ -51,24 +51,25 @@ Docker:
 docker build -t ezhost .
 docker run -p 5000:5000 \
   -e ADMIN_PASSWORD=change-me \
-  -v ./public:/app/public \
-  -v ./data:/app/data \
+  -v ./data:/data \
   ezhost
 ```
 
-Two pieces of state, both must be volumes:
+All state lives in `/data`, which must be a volume:
 
-- `/app/public` — uploaded files.
-- `/app/data` — `ezhost.sqlite` (admin hash + login sessions). Without this
-  volume, recreating the container re-seeds the admin from `ADMIN_PASSWORD`
-  and logs everyone out.
+- `/data/public` — uploaded files.
+- `/data/ezhost.sqlite` — admin hash + login sessions. Without the volume,
+  recreating the container re-seeds the admin from `ADMIN_PASSWORD` and logs
+  everyone out.
+- `/data/logs` — rotated log files.
 
 `ADMIN_PASSWORD` is only read on first run (empty DB). The container runs as
 the unprivileged `bun` user (uid 1000): host directories you mount must be
-writable by that uid (`sudo chown -R 1000:1000 public data`).
+writable by that uid (`sudo chown -R 1000:1000 data`).
 
-Outside Docker the DB defaults to `backend/ezhost.sqlite` regardless of the
-working directory; override with `EZHOST_DB`.
+Outside Docker everything defaults to `data/` at the repo root regardless of
+the working directory; set `DATA_DIR` to move it, or `EZHOST_DB` / `PUBLIC_DIR`
+for one piece.
 
 ## Development
 
@@ -193,7 +194,7 @@ kernel-level sandbox against a hostile local writer).
 
 ### Private enrollment
 On the new container, run:
-docker compose -f compose.vault.yml exec -e VAULT_QR_PATH=/app/data/enroll.svg vault bun vault-setup.js
+docker compose -f compose.vault.yml exec -e VAULT_QR_PATH=/data/enroll.svg vault bun vault-setup.js
 
 Successful private QR creation activates enrollment immediately; no confirmation
 command is needed. Retrieve the file privately, scan it with an authenticator,

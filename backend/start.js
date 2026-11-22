@@ -4,7 +4,7 @@ if (mode === "public") {
 	const { app, PORT } = await import("./index.js");
 	app.listen({ port: PORT });
 } else {
-	console.log("[vault] Private QR file: " + (process.env.VAULT_QR_PATH || "/app/data/enroll.svg") + " (if retained after enrollment)");
+	console.log("[vault] Private QR file: " + (process.env.VAULT_QR_PATH || "/data/enroll.svg") + " (if retained after enrollment)");
 	console.log("[vault] Display existing QR privately: docker compose -f compose.vault.yml exec vault bun vault-setup.js --show");
 	const { createVault } = await import("./vault.js");
 	const { DB_PATH, PUBLIC_DIR, DIST_DIR, PORT } = await import("./config.js");
