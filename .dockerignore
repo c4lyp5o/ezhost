@@ -10,3 +10,11 @@ dist
 logs
 .git
 *.log
+
+# ez standard
+.github
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+coverage
