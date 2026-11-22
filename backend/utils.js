@@ -14,6 +14,7 @@ export class HttpError extends Error {
 // files with the raw originalname — a path-traversal hole (e.g. ../../x could
 // land anywhere). Uploads must always stay inside public/.
 export const safeBasename = (name = "") => {
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: strips control characters from uploaded names
 	const base = path.basename(String(name)).replace(/[\u0000-\u001f]/g, "");
 	if (!base || base === "." || base === "..") return null;
 	return base;

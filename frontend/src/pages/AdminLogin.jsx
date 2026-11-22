@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { login, isAdmin } from "../auth.js";
-import Wordmark from "../components/Wordmark.jsx";
+import { Brand } from "../ez/Brand.jsx";
 import Backdrop from "../ez/Backdrop";
 import { IconLock, IconLoader } from "../components/Icons.jsx";
 
@@ -61,7 +61,7 @@ const AdminLogin = () => {
 			<div className="relative w-full max-w-sm">
 				<div className="mb-8 flex flex-col items-start gap-4">
 					<Link to="/" className="rounded-lg" aria-label="Back to the public page">
-						<Wordmark size={40} />
+						<Brand name="ezhost" />
 					</Link>
 					<h1 className="text-[24px] font-semibold tracking-[-0.01em]">
 						Admin sign in
@@ -82,6 +82,7 @@ const AdminLogin = () => {
 							type="password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
+							// biome-ignore lint/a11y/noAutofocus: the password field is the only thing on this screen
 							autoFocus
 							required
 							autoComplete="current-password"

@@ -1,62 +1,71 @@
-# Test gate — run BEFORE anything publishes.
-#
-# docker-publish.yml and release.yml both call this workflow (`workflow_call`),
-# and their build jobs say `needs: test`, so a red suite never produces an image
-# or a release asset.
-#
-# It also runs on `pull_request` so a PR never shows "no checks reported".
-# There is no `push` trigger, so a merge commit is tested exactly once — by the
-# publish caller.
-name: Tests
+# ez standard test workflow: lint, tests and build, plus the Docker image
+# built, booted and healthy. Runs on PRs; pushes to development and master
+# run it through publish.yml, before anything is published.
+name: test
 
 on:
+  pull_request:
+    branches: [development, master]
   workflow_call:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - development
-      - master
 
 permissions:
   contents: read
 
 jobs:
   test:
+    name: Lint, tests & build
     runs-on: ubuntu-latest
-
     steps:
       - name: 🧾 Checkout source
-        uses: actions/checkout@v5
-
-      - name: 🟢 Setup Bun
+        uses: actions/checkout@v7
+      - name: 🥟 Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-
-      # Not `bun install` at the root: its "install" script would re-run both
-      # installs without --frozen-lockfile.
-      - name: 📦 Install backend deps
-        working-directory: backend
-        run: bun install --frozen-lockfile
-
-      - name: 📦 Install frontend deps
-        working-directory: frontend
-        run: bun install --frozen-lockfile
-
-      # bunfig.toml preloads tests/setup.js: throwaway DB and upload dir.
+          bun-version: 1.4.5
+      - name: 📦 Install dependencies
+        run: |
+          bun install --frozen-lockfile --ignore-scripts
+          cd backend && bun install --frozen-lockfile
+          cd ../frontend && bun install --frozen-lockfile
+      - name: 🧹 Lint (Biome)
+        run: bun run lint
       - name: 🧪 Backend tests
         working-directory: backend
         run: bun test
-
-      - name: 🧹 Lint frontend
-        working-directory: frontend
-        run: bun run lint
-
-      - name: 🌐 Build frontend
+      - name: 🏗️ Build frontend
         working-directory: frontend
         run: bun run build
 
-      # Proves the production image still builds, so a broken Dockerfile fails
-      # the PR instead of the release.
-      - name: 🐳 Docker build
-        run: docker build -t ezhost:ci .
+  docker:
+    name: Docker image (build, boot, healthy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout source
+        uses: actions/checkout@v7
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: 🛠️ Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: ezhost:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: 🔬 Boot and wait for healthy
+        run: |
+          set -euo pipefail
+          docker run -d --name app -e ADMIN_PASSWORD="$(openssl rand -hex 24)" ezhost:ci
+          status=starting
+          for _ in $(seq 1 60); do
+            [ "$(docker inspect -f '{{.State.Running}}' app)" = true ] || { echo "::error::container exited"; exit 1; }
+            status=$(docker inspect -f '{{.State.Health.Status}}' app)
+            [ "$status" = healthy ] && break
+            sleep 2
+          done
+          test "$status" = healthy
+          test "$(docker exec app id -u)" = "1000"
+      - name: 🧾 Container logs
+        if: always()
+        run: docker logs app || true

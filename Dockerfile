@@ -1,44 +1,38 @@
-# Stage 1: Build the React client
-FROM oven/bun:1.4.4-alpine AS builder
+# ez standard Dockerfile: a build stage for the frontend bundle, then an Alpine
+# runtime that runs as the unprivileged `bun` user (uid 1000) with a wget
+# healthcheck. Keep the Bun version in step with `bun-version` in .github/workflows.
 
+# ---- build: frontend bundle ----
+FROM oven/bun:1.4.5-alpine AS build
 WORKDIR /app
-
-# The footer reads the app version from the root package.json at build time.
+COPY frontend/package.json frontend/bun.lock ./frontend/
+RUN cd frontend && bun install --frozen-lockfile
 COPY package.json ./
 COPY frontend ./frontend
-WORKDIR /app/frontend
-RUN bun install --frozen-lockfile && bun run build
+RUN cd frontend && bun run build
 
-# Stage 2: Production — Elysia backend
-FROM oven/bun:1.4.4-alpine
-
-# curl for the healthcheck, tzdata for correct local timestamps
-RUN apk add --no-cache curl tzdata
-
-ENV TZ=Asia/Kuala_Lumpur
-# All persistent state outside public/ lives in /app/data (mount a volume).
-ENV EZHOST_DB=/app/data/ezhost.sqlite
+# ---- runtime ----
+FROM oven/bun:1.4.5-alpine
+ARG APP_VERSION=dev
+LABEL org.opencontainers.image.title="ezhost" \
+	org.opencontainers.image.source="https://github.com/c4lyp5o/ezhost" \
+	org.opencontainers.image.licenses="MIT" \
+	org.opencontainers.image.version="$APP_VERSION"
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Kuala_Lumpur \
+	NODE_ENV=production \
+	HOST=0.0.0.0 \
+	PORT=5000 \
+	DATA_DIR=/data
 WORKDIR /app
-
-# Backend deps first (layer-cached separately from source)
 COPY backend/package.json backend/bun.lock ./backend/
-RUN cd backend && bun install --frozen-lockfile --production
-
-# Backend source, uploads dir, and the built client
+RUN cd backend && bun install --production --frozen-lockfile --ignore-scripts
 COPY backend ./backend
-COPY public ./public
-COPY --from=builder /app/dist ./dist
-
-# Run unprivileged: the bun user (uid 1000, from the base image) only needs
-# write access to uploads and the DB directory.
-RUN mkdir -p /app/data && chown -R bun:bun /app/public /app/data
+COPY --from=build /app/dist ./dist
+RUN mkdir -p /data /data/public /data/logs && chown -R bun:bun /data /data/public /data/logs
 USER bun
-
-WORKDIR /app/backend
+VOLUME ["/data"]
 EXPOSE 5000
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/api/v1/healthcheck || exit 1
-
-ENV HOST=0.0.0.0
-CMD ["bun", "start.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --start-interval=2s --retries=3 \
+	CMD wget -qO- "http://127.0.0.1:${PORT}/api/v1/healthcheck" >/dev/null || exit 1
+CMD ["bun", "backend/start.js"]

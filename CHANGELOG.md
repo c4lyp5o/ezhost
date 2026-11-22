@@ -1,13 +1,31 @@
 # Changelog
 
-## Unreleased — 2026-11-17
+## [Unreleased]
 
+## [1.1.0] - 2026-11-22
+
+### Upgrading
+Everything now lives in one folder, `/data` (`DATA_DIR`): `ezhost.sqlite`, the hosted files in `public/`, and `logs/`.
+
+1. Stop the container.
+2. Make one host folder holding `ezhost.sqlite` (from your old `/app/data` volume) and `public/` (your old `/app/public` volume).
+3. Mount it as `- ./data:/data` instead of the two old volumes, and start it.
+
+If you skip this, the app keeps using the old locations and logs a warning, so nothing is lost.
+
+### Changed
+- Logs go to the console (`docker logs`) and to rotating files in `$DATA_DIR/logs` (`ezhost.log`): 5 MB per file, 3 files kept. Each process writes its own file. The log file is now `ezhost.log` (was `general.log`).
+- All state lives under one folder, `DATA_DIR` (`/data` in the image, `data/` when run from source), declared as a Docker volume. See **Upgrading**.
+- The Docker image follows the ez standard: Alpine, runs as the unprivileged `bun` user (uid 1000), and a `HEALTHCHECK` that reports healthy within seconds of start.
+- CI is two workflows, `test.yml` and `publish.yml`. Merging to `master` publishes `:<version>`, `:latest` and `:sha-<commit>` after the tests (and an image boot check) pass; a `vX.Y.Z` tag is optional and adds a GitHub Release.
+- Every push to `development` publishes `:development` and `:sha-<commit>` after the tests, so unreleased changes can be tried without touching `master`.
+- Header, sidebar and sign-in use the shared ez `Brand`: the ez icon and the lowercase name.
+- Dependencies updated (majors kept only where the tests passed), Docker image on oven/bun 1.4.5, Biome as the linter, and the shared ez favicon.
 - Style the vault OTP wall and file browser with the shared ez theme, responsive
   layouts, theme switch, file rows and inbox upload controls.
 - Activate enrollment after successful private QR generation; remove the separate
   OTP confirmation command. Failed QR writes remain inactive; existing enrollments
   cannot be overwritten.
-
 - Add isolated Our Vault mode: private TOTP enrollment, replay protection,
   persistent login throttling, hashed 30-minute sessions and authenticated downloads.
 - Add authenticated streaming inbox uploads (100 MiB cap), exclusive creation,

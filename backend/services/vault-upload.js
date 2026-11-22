@@ -6,6 +6,7 @@ export const MAX_INBOX_BYTES = 100 * 1024 * 1024;
 
 export async function saveInboxUpload({ request, name, inbox, limit = MAX_INBOX_BYTES }) {
 	if (!inbox) return { status: 503, message: "Inbox is not configured" };
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting control characters in file names is the point
 	if (typeof name !== "string" || !name || name.startsWith(".") || /[\\/\x00-\x1f\x7f]/.test(name) || Buffer.byteLength(name) > 200 || name.trim() !== name) {
 		return { status: 400, message: "Use a plain filename (no paths or hidden files)" };
 	}
